@@ -1,0 +1,64 @@
+package com.skillsync.apiGateway.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.servlet.function.ServerResponse;
+
+import static org.springframework.cloud.gateway.server.mvc.filter.LoadBalancerFilterFunctions.lb;
+import static org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions.route;
+import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions.http;
+import static org.springframework.web.servlet.function.RequestPredicates.path;
+
+@Configuration
+public class GatewayConfig {
+
+    @Bean
+    public RouterFunction<ServerResponse> authServiceRoute() {
+        return route("auth-service-route")
+                .route(path("/auth/**"), http())
+                .filter(lb("auth-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> mentorServiceRoute() {
+        return route("mentor-service-route")
+                .route(path("/mentors/**"), http())
+                .filter(lb("mentor-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> skillServiceRoute() {
+        return route("skill-service-route")
+                .route(path("/skills/**"), http())
+                .filter(lb("skill-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> groupServiceRoute() {
+        return route("group-service-route")
+                .route(path("/groups/**"), http())
+                .filter(lb("group-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> notificationServiceRoute() {
+        return route("notification-service-route")
+                .route(path("/notifications/**"), http())
+                .filter(lb("notification-service"))
+                .build();
+    }
+    
+    @Bean
+    public RouterFunction<ServerResponse> userServiceRoute() {
+        return route("user-service-route")
+                .route(path("/users/**"), http())
+                .filter(lb("user-service"))
+                .build();
+    }
+    
+}
