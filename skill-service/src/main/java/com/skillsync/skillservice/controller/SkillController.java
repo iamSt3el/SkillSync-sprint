@@ -1,11 +1,8 @@
 package com.skillsync.skillservice.controller;
 
-import com.skillsync.skillservice.dto.request.SkillRequest;
 import com.skillsync.skillservice.dto.response.SkillResponse;
 import com.skillsync.skillservice.service.SkillService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,14 +14,6 @@ import java.util.List;
 public class SkillController {
 
     private final SkillService skillService;
-
-    // POST /skills — admin creates a new skill in the catalog
-    @PostMapping
-    public ResponseEntity<SkillResponse> createSkill(
-            @Valid @RequestBody SkillRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(skillService.createSkill(request));
-    }
 
     // GET /skills — anyone can browse the full skill catalog
     @GetMapping

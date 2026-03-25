@@ -36,4 +36,15 @@ public class GroupService {
 		Group group = groupRepository.findById(id).orElseThrow(() -> new GroupNotFoundException(id));
 		return groupMapper.toResponseDto(group);
 	}
+
+	public void deleteGroup(Long id) {
+		Group group = groupRepository.findById(id).orElseThrow(() -> new GroupNotFoundException(id));
+		groupRepository.delete(group);
+	}
+
+	public void deactivateGroup(Long id) {
+		Group group = groupRepository.findById(id).orElseThrow(() -> new GroupNotFoundException(id));
+		group.setActive(false);
+		groupRepository.save(group);
+	}
 }

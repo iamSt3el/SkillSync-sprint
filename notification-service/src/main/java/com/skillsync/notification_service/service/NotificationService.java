@@ -39,6 +39,7 @@ public class NotificationService {
         String userEmail = "iamsteel9166@gmail.com";
         try {
             emailService.sendEmail(userEmail, type.name(), message);
+            log.info("Email notificaiton has sent to user userId={}: {}", userId);
         } catch (EmailSendException e) {
             log.warn("Email notification skipped for userId={}: {}", userId, e.getMessage());
         }

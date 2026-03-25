@@ -52,7 +52,7 @@ public class GatewayConfig {
                 .filter(lb("notification-service"))
                 .build();
     }
-    
+
     @Bean
     public RouterFunction<ServerResponse> userServiceRoute() {
         return route("user-service-route")
@@ -60,5 +60,69 @@ public class GatewayConfig {
                 .filter(lb("user-service"))
                 .build();
     }
+
+    @Bean
+    public RouterFunction<ServerResponse> adminUserServiceRoute() {
+        return route("admin-user-service-route")
+                .route(path("/admin/users/**"), http())
+                .filter(lb("user-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> adminGroupServiceRoute() {
+        return route("admin-group-service-route")
+                .route(path("/admin/groups/**"), http())
+                .filter(lb("group-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> adminMentorServiceRoute() {
+        return route("admin-mentor-service-route")
+                .route(path("/admin/mentors/**"), http())
+                .filter(lb("mentor-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> adminSkillServiceRoute() {
+        return route("admin-skill-service-route")
+                .route(path("/admin/skills/**"), http())
+                .filter(lb("skill-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> sessionServiceRoute() {
+        return route("session-service-route")
+                .route(path("/sessions/**"), http())
+                .filter(lb("session-service"))
+                .build();
+    }
     
+    @Bean
+    public RouterFunction<ServerResponse> reviewServiceRoute() {
+        return route("review-service-route")
+                .route(path("/reviews/**"), http())
+                .filter(lb("review-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> adminSessionServiceRoute() {
+        return route("admin-session-service-route")
+                .route(path("/admin/sessions/**"), http())
+                .filter(lb("session-service"))
+                .build();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> adminReviewServiceRoute() {
+        return route("admin-review-service-route")
+                .route(path("/admin/reviews/**"), http())
+                .filter(lb("review-service"))
+                .build();
+    }
+
 }

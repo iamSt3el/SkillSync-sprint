@@ -1,0 +1,6 @@
+CREATE DATABASE IF NOT EXISTS skillsync_auth;
+CREATE DATABASE IF NOT EXISTS user_service;
+CREATE DATABASE IF NOT EXISTS mentor_service;
+CREATE DATABASE IF NOT EXISTS `reviews-service`;
+CREATE DATABASE IF NOT EXISTS `notification-service`;
+CREATE DATABASE IF NOT EXISTS `group-service`;

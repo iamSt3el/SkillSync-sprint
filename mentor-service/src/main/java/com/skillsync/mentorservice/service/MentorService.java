@@ -1,5 +1,6 @@
 package com.skillsync.mentorservice.service;
 
+import com.skillsync.mentorservice.config.RabbitMQConfig;
 import com.skillsync.mentorservice.dto.request.AvailabilityRequest;
 import com.skillsync.mentorservice.dto.request.MentorApplyRequest;
 import com.skillsync.mentorservice.dto.response.MentorResponse;
@@ -8,11 +9,13 @@ import com.skillsync.mentorservice.dto.response.UserResponse;
 import com.skillsync.mentorservice.entity.Mentor;
 import com.skillsync.mentorservice.entity.MentorSkill;
 import com.skillsync.mentorservice.enums.MentorStatus;
+import com.skillsync.mentorservice.event.MentorApprovedEvent;
 import com.skillsync.mentorservice.exception.MentorNotFoundException;
 import com.skillsync.mentorservice.feign.SkillServiceClient;
 import com.skillsync.mentorservice.feign.UserServiceClient;
 import com.skillsync.mentorservice.repository.MentorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class MentorService {
     private final MentorRepository mentorRepository;
     private final UserServiceClient userServiceClient;
     private final SkillServiceClient skillServiceClient;
+    private final RabbitTemplate rabbitTemplate;
 
     // POST /mentors/apply
     @Transactional
@@ -40,6 +44,7 @@ public class MentorService {
         }
 
         Mentor mentor = Mentor.builder()
+                .id(userId)
                 .userId(userId)
                 .bio(request.getBio())
                 .experience(request.getExperience())
@@ -102,7 +107,27 @@ public class MentorService {
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new MentorNotFoundException("Mentor not found with id: " + id));
         mentor.setStatus(MentorStatus.ACTIVE);
-        return buildMentorResponse(mentorRepository.save(mentor));
+        Mentor saved = mentorRepository.save(mentor);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.MENTOR_APPROVED_KEY,
+                new MentorApprovedEvent(saved.getUserId()));
+        return buildMentorResponse(saved);
+    }
+
+    // GET /mentors (all, including pending — admin only)
+    @Transactional(readOnly = true)
+    public List<MentorResponse> getAllMentors() {
+        return mentorRepository.findAll()
+                .stream()
+                .map(this::buildMentorResponse)
+                .collect(Collectors.toList());
+    }
+
+    // DELETE /admin/mentors/{id}
+    @Transactional
+    public void deleteMentor(Long id) {
+        Mentor mentor = mentorRepository.findById(id)
+                .orElseThrow(() -> new MentorNotFoundException("Mentor not found with id: " + id));
+        mentorRepository.delete(mentor);
     }
 
     // GET /mentors/{id}/exists — internal endpoint for session-service

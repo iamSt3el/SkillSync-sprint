@@ -82,22 +82,6 @@ public class MentorController {
     }
 
     /**
-     * PUT /mentors/{id}/approve
-     * Admin approves a pending mentor application → ACTIVE.
-     */
-    @PutMapping("/{id}/approve")
-    public ResponseEntity<MentorResponse> approveMentor(
-            @PathVariable Long id,
-            @RequestHeader(value = "X-User-Role", required = false) String role) {
-
-        log.info("PUT /mentors/{}/approve - role={}", id, role);
-        if (!"ROLE_ADMIN".equals(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        return ResponseEntity.ok(mentorService.approveMentor(id));
-    }
-
-    /**
      * GET /mentors/{id}/exists
      * Internal endpoint used by session-service to validate a mentor before booking.
      * Returns true only if the mentor exists AND is ACTIVE.

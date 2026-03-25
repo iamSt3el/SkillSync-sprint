@@ -87,6 +87,19 @@ public class SessionController {
     }
 
     /**
+     * PUT /sessions/{id}/complete
+     * Only the mentor can mark a session as completed.
+     */
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<SessionResponse> completeSession(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId) {
+
+        log.info("PUT /sessions/{}/complete - userId={}", id, userId);
+        return ResponseEntity.ok(sessionService.completeSession(id, userId));
+    }
+
+    /**
      * GET /sessions/{sessionId}/status
      * Internal endpoint for Review Service to validate a session is COMPLETED.
      */

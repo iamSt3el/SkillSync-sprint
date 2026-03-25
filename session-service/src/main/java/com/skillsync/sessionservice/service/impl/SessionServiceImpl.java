@@ -123,6 +123,45 @@ public class SessionServiceImpl implements SessionService {
         return findSessionOrThrow(sessionId).getStatus().name();
     }
 
+    @Override
+    @Transactional
+    public SessionResponse completeSession(Long sessionId, Long userId) {
+        Session session = findSessionOrThrow(sessionId);
+        if (!session.getMentorId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the mentor can mark a session as completed");
+        }
+        if (session.getStatus() != SessionStatus.ACCEPTED) {
+            throw new InvalidSessionStateException("Only ACCEPTED sessions can be marked as completed");
+        }
+        session.setStatus(SessionStatus.COMPLETED);
+        Session updated = sessionRepository.save(session);
+        publishSessionEvent(updated, RabbitMQConfig.SESSION_COMPLETED_KEY);
+        return sessionMapper.toResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public SessionResponse adminCancelSession(Long sessionId) {
+        Session session = findSessionOrThrow(sessionId);
+        if (session.getStatus() == SessionStatus.COMPLETED ||
+            session.getStatus() == SessionStatus.CANCELLED) {
+            throw new InvalidSessionStateException("Cannot cancel a completed or already cancelled session");
+        }
+        session.setStatus(SessionStatus.CANCELLED);
+        Session updated = sessionRepository.save(session);
+        publishSessionEvent(updated, RabbitMQConfig.SESSION_CANCELLED_KEY);
+        return sessionMapper.toResponse(updated);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SessionResponse> getAllSessions() {
+        return sessionRepository.findAll()
+                .stream()
+                .map(sessionMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
     private Session findSessionOrThrow(Long id) {
         return sessionRepository.findById(id)
                 .orElseThrow(() -> new SessionNotFoundException("Session not found: " + id));

@@ -12,52 +12,36 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String EXCHANGE            = "skillsync.exchange";
-    public static final String USER_REGISTERED_QUEUE = "user.registered.queue";
-    public static final String USER_REGISTERED_KEY  = "user.registered";
+    public static final String EXCHANGE                   = "skillsync.exchange";
+    public static final String USER_REGISTERED_QUEUE     = "user.registered.queue";
+    public static final String USER_REGISTERED_KEY       = "user.registered";
+    public static final String MENTOR_APPROVED_AUTH_QUEUE = "mentor.approved.auth.queue";
+    public static final String MENTOR_APPROVED_KEY       = "mentor.approved";
 
-    // ─── Exchange ──────────────────────────────────────────────
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE);
     }
 
-    // ─── Queues ────────────────────────────────────────────────
     @Bean
-    public Queue userBookedQueue() {
-        return new Queue(USER_REGISTERED_QUEUE, true);
+    public Queue mentorApprovedAuthQueue() {
+        return new Queue(MENTOR_APPROVED_AUTH_QUEUE, true);
     }
 
-    // ─── Bindings ──────────────────────────────────────────────
     @Bean
-    public Binding sessionBookedBinding() {
-        return BindingBuilder
-            .bind(userBookedQueue())
-            .to(exchange())
-            .with(USER_REGISTERED_KEY);
+    public Binding mentorApprovedAuthBinding() {
+        return BindingBuilder.bind(mentorApprovedAuthQueue()).to(exchange()).with(MENTOR_APPROVED_KEY);
     }
 
-    // ─── JSON Converter ────────────────────────────────────────
     @Bean
-    public MessageConverter jsonMessageConverter() {
+    public MessageConverter jacksonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
-    // ─── RabbitTemplate (for publishing) ───────────────────────
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(jsonMessageConverter());
-        return rabbitTemplate;
-    }
-
-    // ─── Listener Container Factory (for consuming) ────────────
-    @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
-            ConnectionFactory connectionFactory) {
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(jsonMessageConverter());
-        return factory;
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(jacksonMessageConverter());
+        return template;
     }
 }

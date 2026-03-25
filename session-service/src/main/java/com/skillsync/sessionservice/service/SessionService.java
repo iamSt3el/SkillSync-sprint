@@ -18,4 +18,10 @@ public interface SessionService {
     List<SessionResponse> getSessionsByUserId(Long userId, Long requesterId, String role);
 
     String getSessionStatus(Long sessionId);
+
+    SessionResponse completeSession(Long sessionId, Long userId);
+
+    List<SessionResponse> getAllSessions();
+
+    SessionResponse adminCancelSession(Long sessionId);
 }

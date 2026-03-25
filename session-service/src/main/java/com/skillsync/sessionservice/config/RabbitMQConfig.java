@@ -15,15 +15,17 @@ public class RabbitMQConfig {
     // All services share the single skillsync.exchange
     public static final String EXCHANGE = "skillsync.exchange";
 
-    public static final String SESSION_BOOKED_KEY    = "session.booked";
-    public static final String SESSION_ACCEPTED_KEY  = "session.accepted";
-    public static final String SESSION_REJECTED_KEY  = "session.rejected";
-    public static final String SESSION_CANCELLED_KEY = "session.cancelled";
+    public static final String SESSION_BOOKED_KEY     = "session.booked";
+    public static final String SESSION_ACCEPTED_KEY   = "session.accepted";
+    public static final String SESSION_REJECTED_KEY   = "session.rejected";
+    public static final String SESSION_CANCELLED_KEY  = "session.cancelled";
+    public static final String SESSION_COMPLETED_KEY  = "session.completed";
 
-    public static final String SESSION_BOOKED_QUEUE    = "session.booked.queue";
-    public static final String SESSION_ACCEPTED_QUEUE  = "session.accepted.queue";
-    public static final String SESSION_REJECTED_QUEUE  = "session.rejected.queue";
-    public static final String SESSION_CANCELLED_QUEUE = "session.cancelled.queue";
+    public static final String SESSION_BOOKED_QUEUE     = "session.booked.queue";
+    public static final String SESSION_ACCEPTED_QUEUE   = "session.accepted.queue";
+    public static final String SESSION_REJECTED_QUEUE   = "session.rejected.queue";
+    public static final String SESSION_CANCELLED_QUEUE  = "session.cancelled.queue";
+    public static final String SESSION_COMPLETED_QUEUE  = "session.completed.queue";
 
     // ─── Exchange ──────────────────────────────────────────────
     @Bean
@@ -52,6 +54,11 @@ public class RabbitMQConfig {
         return new Queue(SESSION_CANCELLED_QUEUE, true);
     }
 
+    @Bean
+    public Queue sessionCompletedQueue() {
+        return new Queue(SESSION_COMPLETED_QUEUE, true);
+    }
+
     // ─── Bindings ──────────────────────────────────────────────
     @Bean
     public Binding sessionBookedBinding() {
@@ -71,6 +78,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding sessionCancelledBinding() {
         return BindingBuilder.bind(sessionCancelledQueue()).to(exchange()).with(SESSION_CANCELLED_KEY);
+    }
+
+    @Bean
+    public Binding sessionCompletedBinding() {
+        return BindingBuilder.bind(sessionCompletedQueue()).to(exchange()).with(SESSION_COMPLETED_KEY);
     }
 
     // ─── JSON Converter ────────────────────────────────────────

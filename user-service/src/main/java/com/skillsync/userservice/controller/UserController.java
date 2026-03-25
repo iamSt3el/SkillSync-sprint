@@ -16,10 +16,11 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id,
-            @RequestHeader(value = "X-User-Email", required = false) String email) {
-        Optional<UserDTO> user = userService.getUserById(id);
+    @GetMapping()
+    public ResponseEntity<UserDTO> getUserById(
+            @RequestHeader(value = "X-User-Email", required = false) String email,
+    		@RequestHeader(value = "X-User-Id") Long userId){
+        Optional<UserDTO> user = userService.getUserById(userId);
         if (user.isPresent()) {
             if (email != null && user.get().getEmail().equalsIgnoreCase(email)) {
                 return ResponseEntity.ok(user.get());
@@ -29,14 +30,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id,
+    @PutMapping()
+    public ResponseEntity<UserDTO> updateUser(@RequestHeader(value = "X-User-Id") Long userId,
             @RequestHeader(value = "X-User-Email", required = false) String email,
             @RequestBody UserDTO userDetails) {
-        Optional<UserDTO> user = userService.getUserById(id);
+        Optional<UserDTO> user = userService.getUserById(userId);
         if (user.isPresent()) {
             if (email != null && user.get().getEmail().equalsIgnoreCase(email)) {
-                UserDTO updatedUser = userService.updateUser(id, userDetails);
+                UserDTO updatedUser = userService.updateUser(userId, userDetails);
                 return ResponseEntity.ok(updatedUser);
             }
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

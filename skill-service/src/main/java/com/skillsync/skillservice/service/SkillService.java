@@ -48,6 +48,14 @@ public class SkillService {
                 .orElseThrow(() -> new SkillNotFoundException("Skill not found with id: " + id));
     }
 
+    // DELETE /admin/skills/{id}
+    @Transactional
+    public void deleteSkill(Long id) {
+        Skill skill = skillRepository.findById(id)
+                .orElseThrow(() -> new SkillNotFoundException("Skill not found with id: " + id));
+        skillRepository.delete(skill);
+    }
+
     // Private helper
     private SkillResponse toResponse(Skill skill) {
         return SkillResponse.builder()

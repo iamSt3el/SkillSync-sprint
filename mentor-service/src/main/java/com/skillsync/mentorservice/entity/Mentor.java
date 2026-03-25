@@ -13,7 +13,6 @@ import java.util.List;
 public class Mentor {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)

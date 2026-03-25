@@ -20,7 +20,8 @@ public class UserEventConsumer {
 	@RabbitListener(queues = "user.registered.queue")
 	public void handleUserRegistered(UserRegisteredEvent event) {
 		if(userRepository.existsByEmail(event.getEmail())) {
-			log.warn("User already exists, skipping: {}" + event.getEmail());
+			log.warn("User already exists, skipping: {}", event.getEmail());
+			return;
 		}
 		User user = new User(
 				event.getUserName(),
@@ -29,7 +30,7 @@ public class UserEventConsumer {
 				event.getPassword(),
 				event.getRole()
 				);
-		
+		user.setId(event.getUserId());
 		userService.createUser(user);
 		log.info("Created User profile for: {}", event.getEmail());
 	}

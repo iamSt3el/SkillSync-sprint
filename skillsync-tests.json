@@ -1,0 +1,828 @@
+{
+  "info": {
+    "name": "SkillSync API Tests",
+    "description": "Full end-to-end test suite. Run folders in order 1→15. Tokens and IDs are captured automatically via test scripts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",     "value": "http://localhost:9090" },
+    { "key": "token",        "value": "" },
+    { "key": "admin_token",  "value": "" },
+    { "key": "mentor_token", "value": "" },
+    { "key": "skill_id",     "value": "1" },
+    { "key": "mentor_id",    "value": "" },
+    { "key": "session_id",   "value": "" },
+    { "key": "group_id",     "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register alice (learner)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice\",\n  \"email\": \"alice@test.com\",\n  \"password\": \"Alice@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register bob (learner)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"bob\",\n  \"email\": \"bob@test.com\",\n  \"password\": \"Bob@12345\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login alice → saves token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.token) pm.collectionVariables.set('token', res.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@test.com\",\n  \"password\": \"Alice@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login admin → saves admin_token",
+          "description": "Admin pre-seeded by DataInitializer on startup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.token) pm.collectionVariables.set('admin_token', res.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@skillsync.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/refresh",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Weak password rejected → 400",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"weak\",\n  \"email\": \"weak@test.com\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[SECURITY] Wrong password → 401",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@test.com\",\n  \"password\": \"Wrong@9999\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[SECURITY] No token → 401",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users",
+            "header": []
+          }
+        },
+        {
+          "name": "[SECURITY] Tampered token → 401",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users",
+            "header": [{ "key": "Authorization", "value": "Bearer eyJhbGciOiJIUzM4NCJ9.tampered.payload" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Header injection stripped by gateway → 401",
+          "description": "Even if a client sends X-User-Id manually, the gateway strips it. Without a valid Bearer token the request is rejected.",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users",
+            "header": [
+              { "key": "X-User-Id",    "value": "1" },
+              { "key": "X-User-Email", "value": "admin@skillsync.com" },
+              { "key": "X-User-Role",  "value": "ROLE_ADMIN" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Users",
+      "item": [
+        {
+          "name": "Get Own Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Update Own Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/users",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Updated\",\n  \"email\": \"alice@test.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[SECURITY] Access another user's profile → 403",
+          "description": "Gateway overwrites X-User-Id from JWT — service rejects because email doesn't match user 999",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-User-Id",    "value": "999" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Admin — Users",
+      "item": [
+        {
+          "name": "[ADMIN] Get All Users",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/users",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Block User (bob = id 3)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/users/3/block",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Unblock User (bob = id 3)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/users/3/unblock",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/users/3",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Non-admin hits admin/users → 403",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/users",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Skills",
+      "item": [
+        {
+          "name": "List All Skills",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/skills",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Skill by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/skills/{{skill_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Admin — Skills",
+      "item": [
+        {
+          "name": "[ADMIN] Create Skill (Java) → saves skill_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.id) pm.collectionVariables.set('skill_id', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/admin/skills",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Java\",\n  \"category\": \"Backend\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Create Skill (React)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/admin/skills",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"React\",\n  \"category\": \"Frontend\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Skill",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/skills/{{skill_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Non-admin creates skill → 403",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/admin/skills",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hacked\",\n  \"category\": \"Test\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Mentors",
+      "item": [
+        {
+          "name": "alice applies as mentor → saves mentor_id",
+          "description": "mentor_id will equal alice's userId (2) because we removed @GeneratedValue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.id) pm.collectionVariables.set('mentor_id', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/mentors/apply",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Senior Java developer with 8 years of experience in backend systems\",\n  \"experience\": 8,\n  \"hourlyRate\": 50.0,\n  \"skillIds\": [{{skill_id}}]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Active Mentors",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/mentors",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Search Mentors (filtered)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/mentors?skillId={{skill_id}}&minRating=0&maxRate=100&sortBy=rating",
+              "query": [
+                { "key": "skillId",   "value": "{{skill_id}}" },
+                { "key": "minRating", "value": "0" },
+                { "key": "maxRate",   "value": "100" },
+                { "key": "sortBy",    "value": "rating" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Mentor by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/mentors/{{mentor_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Update Mentor Availability (after approval)",
+          "description": "Use mentor_token — alice must be approved and re-logged in first",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/mentors/{{mentor_id}}/availability",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{mentor_token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schedule\": \"Mon-Fri 9am-5pm UTC\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Admin — Mentors",
+      "item": [
+        {
+          "name": "[ADMIN] Get All Mentors (including PENDING)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/mentors",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Approve Mentor (alice) → triggers role update via RabbitMQ",
+          "description": "After this: auth-service and user-service update alice's role to ROLE_MENTOR. Alice must re-login to get a new token.",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/mentors/{{mentor_id}}/approve",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "alice re-login after approval → saves mentor_token",
+          "description": "New JWT will have ROLE_MENTOR instead of ROLE_LEARNER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.token) pm.collectionVariables.set('mentor_token', res.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@test.com\",\n  \"password\": \"Alice@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Mentor",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/mentors/{{mentor_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Non-admin approves mentor → 403",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/mentors/{{mentor_id}}/approve",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Sessions",
+      "item": [
+        {
+          "name": "bob books session with alice → saves session_id",
+          "description": "mentorId = alice's userId. Use bob's token (register bob first and login separately if needed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.id) pm.collectionVariables.set('session_id', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/sessions",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mentorId\": {{mentor_id}},\n  \"sessionDate\": \"2026-06-01T10:00:00\",\n  \"topic\": \"Spring Boot deep dive\"\n}"
+            }
+          }
+        },
+        {
+          "name": "alice (mentor) accepts session → notifies learner via RabbitMQ",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/sessions/{{session_id}}/accept",
+            "header": [{ "key": "Authorization", "value": "Bearer {{mentor_token}}" }]
+          }
+        },
+        {
+          "name": "alice (mentor) marks session complete → triggers review reminder notification",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/sessions/{{session_id}}/complete",
+            "header": [{ "key": "Authorization", "value": "Bearer {{mentor_token}}" }]
+          }
+        },
+        {
+          "name": "Reject Session (Mentor)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/sessions/{{session_id}}/reject",
+            "header": [{ "key": "Authorization", "value": "Bearer {{mentor_token}}" }]
+          }
+        },
+        {
+          "name": "Cancel Session (Learner or Mentor)",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/sessions/{{session_id}}/cancel",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get My Sessions",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/sessions/user/2",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Session Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/sessions/{{session_id}}/status",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Learner tries to complete session → 403",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/sessions/{{session_id}}/complete",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Accept session not owned → 403",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/sessions/{{session_id}}/accept",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Admin — Sessions",
+      "item": [
+        {
+          "name": "[ADMIN] Get All Sessions",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/sessions",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Force Cancel Session",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/sessions/{{session_id}}/cancel",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Non-admin hits admin/sessions → 403",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/sessions",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Reviews",
+      "item": [
+        {
+          "name": "Submit Review (after session COMPLETED) → triggers mentor rating update",
+          "description": "Session must be COMPLETED first. Publishes review.submitted event → mentor-service updates rating.",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/reviews",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mentor_id\": {{mentor_id}},\n  \"user_id\": 3,\n  \"rating\": 4.5,\n  \"comment\": \"Great session, very knowledgeable!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Reviews for Mentor",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/reviews/mentor/{{mentor_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Duplicate review for same mentor → 500/409",
+          "description": "Composite unique constraint (mentorId, userId) blocks duplicate reviews",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/reviews",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mentor_id\": {{mentor_id}},\n  \"user_id\": 3,\n  \"rating\": 1.0,\n  \"comment\": \"Second review attempt — should fail\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Admin — Reviews",
+      "item": [
+        {
+          "name": "[ADMIN] Get All Reviews",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/reviews",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Review",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/reviews/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Non-admin hits admin/reviews → 403",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/reviews",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Groups",
+      "item": [
+        {
+          "name": "Create Group → saves group_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.id) pm.collectionVariables.set('group_id', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/groups",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Java Learners\",\n  \"description\": \"Group for Java enthusiasts\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List All Groups",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/groups",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Get Group by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/groups/{{group_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Join Group → notifies group admin via RabbitMQ",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/groups/{{group_id}}/join",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 3\n}"
+            }
+          }
+        },
+        {
+          "name": "Leave Group → notifies group admin via RabbitMQ",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/groups/{{group_id}}/leave",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 3\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Admin — Groups",
+      "item": [
+        {
+          "name": "[ADMIN] Get All Groups",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/groups",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Deactivate Group",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/groups/{{group_id}}/deactivate",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Group",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/groups/{{group_id}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }]
+          }
+        },
+        {
+          "name": "[SECURITY] Non-admin hits admin/groups → 403",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/groups",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications (alice = userId 2)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/notifications/user/2",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/notifications/1/read",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15. Internal / Health",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/actuator/health",
+            "header": []
+          }
+        },
+        {
+          "name": "Mentor Exists (internal — used by session-service)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/mentors/{{mentor_id}}/exists",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}
