@@ -34,6 +34,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/auth/register", "/auth/login").permitAll()
                 .requestMatchers("/auth/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 // .requestMatchers("/auth/test").hasAuthority("ADMIN")
                 .anyRequest().authenticated()
             )

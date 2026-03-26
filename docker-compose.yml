@@ -41,12 +41,38 @@ services:
     networks:
       - skillsync-net
 
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - skillsync-net
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - skillsync-net
+
   # ── Service Discovery & Config ───────────────────────────────────────────────
 
   eureka-server:
     build: ./eureka-server
     ports:
       - "8761:8761"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health || exit 1"]
       interval: 15s
@@ -61,6 +87,7 @@ services:
     ports:
       - "8888:8888"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -80,6 +107,7 @@ services:
     build: ./auth-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m"
       SPRING_APPLICATION_NAME: auth-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -101,6 +129,7 @@ services:
     build: ./user-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       SPRING_APPLICATION_NAME: user-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -122,6 +151,7 @@ services:
     build: ./mentor-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       SPRING_APPLICATION_NAME: mentor-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -143,6 +173,7 @@ services:
     build: ./skill-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       SPRING_APPLICATION_NAME: skill-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -162,6 +193,7 @@ services:
     build: ./session-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       SPRING_APPLICATION_NAME: session-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -183,6 +215,7 @@ services:
     build: ./group-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       SPRING_APPLICATION_NAME: group-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -204,6 +237,7 @@ services:
     build: ./review-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       SPRING_APPLICATION_NAME: review-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -225,6 +259,7 @@ services:
     build: ./notification-service
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
       SPRING_APPLICATION_NAME: notification-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -250,6 +285,7 @@ services:
       - "9090:9090"
     restart: on-failure
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m"
       SPRING_APPLICATION_NAME: api-gateway
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
@@ -265,6 +301,7 @@ services:
 
 volumes:
   mysql_data:
+  grafana_data:
 
 networks:
   skillsync-net:
