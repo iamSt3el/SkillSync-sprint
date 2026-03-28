@@ -125,4 +125,12 @@ public class GatewayConfig {
                 .build();
     }
 
+    @Bean
+    public RouterFunction<ServerResponse> paymentServiceRoute() {
+        return route("payment-service-route")
+                .route(path("/payments/**"), http())
+                .filter(lb("payment-service"))
+                .build();
+    }
+
 }

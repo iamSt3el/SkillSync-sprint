@@ -52,6 +52,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // These headers are only set by the gateway after JWT validation.
         HttpServletRequest stripped = stripInternalHeaders(request);
 
+        // Allow CORS preflight requests through without JWT validation
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(stripped, response);
+            return;
+        }
+
         if (isPublicPath(path)) {
             filterChain.doFilter(stripped, response);
             return;

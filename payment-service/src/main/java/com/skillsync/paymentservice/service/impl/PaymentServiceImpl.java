@@ -68,15 +68,25 @@ public class PaymentServiceImpl implements PaymentService {
 
         String gatewayOrderId = createRazorpayOrder(sessionId, amount);
 
-        Payment payment = Payment.builder()
-                .sessionId(sessionId)
-                .learnerId(learnerId)
-                .mentorId(session.getMentorId())
-                .amount(amount)
-                .currency(CURRENCY)
-                .status(PaymentStatus.INITIATED)
-                .gatewayOrderId(gatewayOrderId)
-                .build();
+        // Reuse existing record if payment was previously initiated or failed
+        Payment payment = paymentRepository.findBySessionId(sessionId)
+                .map(existing -> {
+                    existing.setGatewayOrderId(gatewayOrderId);
+                    existing.setGatewayPaymentId(null);
+                    existing.setGatewaySignature(null);
+                    existing.setFailureReason(null);
+                    existing.setStatus(PaymentStatus.INITIATED);
+                    return existing;
+                })
+                .orElseGet(() -> Payment.builder()
+                        .sessionId(sessionId)
+                        .learnerId(learnerId)
+                        .mentorId(session.getMentorId())
+                        .amount(amount)
+                        .currency(CURRENCY)
+                        .status(PaymentStatus.INITIATED)
+                        .gatewayOrderId(gatewayOrderId)
+                        .build());
 
         paymentRepository.save(payment);
         log.info("Payment initiated for sessionId={}, orderId={}", sessionId, gatewayOrderId);

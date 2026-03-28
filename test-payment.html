@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <button onclick="pay()">Pay Now</button>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    const JWT_TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0bGVhcm5lckBza2lsbHN5bmMuY29tIiwicm9sZXMiOlsiUk9MRV9MRUFSTkVSIl0sInVzZXJJZCI6NiwiaWF0IjoxNzc0NjgxMjk2LCJleHAiOjE3NzQ2ODQ4OTZ9.QwH5xsAl0BYTW-Po5-MJoR17CWcj1roZE_gRd5J5l29Uku-sM4pJSdpILr79N8dQ";
+    const SESSION_ID = 5;
+
+    async function pay() {
+      const res = await fetch("http://localhost:9090/payments/initiate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + JWT_TOKEN
+        },
+        body: JSON.stringify({ sessionId: SESSION_ID })
+      });
+
+      const order = await res.json();
+
+      if (!res.ok) {
+        alert("Initiate failed: " + JSON.stringify(order));
+        return;
+      }
+
+      const options = {
+        key:      order.razorpayKeyId,
+        amount:   order.amount * 100,
+        currency: order.currency,
+        order_id: order.gatewayOrderId,
+        handler: async function(response) {
+          const verify = await fetch("http://localhost:9090/payments/verify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + JWT_TOKEN
+            },
+            body: JSON.stringify({
+              sessionId:        SESSION_ID,
+              gatewayOrderId:   response.razorpay_order_id,
+              gatewayPaymentId: response.razorpay_payment_id,
+              gatewaySignature: response.razorpay_signature
+            })
+          });
+          const result = await verify.json();
+          alert("Payment status: " + result.status);
+        }
+      };
+
+      new Razorpay(options).open();
+    }
+  </script>
+</body>
+</html>
