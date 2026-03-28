@@ -1,7 +1,5 @@
 package com.skillsync.notification_service.service;
 
-import java.security.DrbgParameters.Reseed;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

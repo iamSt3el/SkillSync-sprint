@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.skillsync.authservice.security.CustomUserDetailsService;
 import com.skillsync.authservice.security.JwtFilter;
 
 @Configuration
@@ -20,11 +19,9 @@ import com.skillsync.authservice.security.JwtFilter;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
-    private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtFilter jwtFilter, CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
-        this.userDetailsService = userDetailsService;
     }
 
     @Bean

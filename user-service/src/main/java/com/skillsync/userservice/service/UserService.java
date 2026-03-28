@@ -2,24 +2,31 @@ package com.skillsync.userservice.service;
 
 import com.skillsync.userservice.dto.UserDTO;
 import com.skillsync.userservice.entity.User;
+import com.skillsync.userservice.exception.UserNotFoundException;
 import com.skillsync.userservice.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private static final String USER_WITH_ID = "User with id ";
+    private static final String NOT_FOUND = " not found";
+
+    private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(UserDTO::new)
-                .collect(Collectors.toList());
+                .toList();
     }
     
     public List<UserDTO> getUsersByIds(List<Long> ids) {
@@ -39,41 +46,46 @@ public class UserService {
 
     public UserDTO updateUser(Long id, UserDTO userDetails) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new com.skillsync.userservice.exception.UserNotFoundException("User with id " + id + " not found"));
+                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
 
         user.setName(userDetails.getName());
         user.setEmail(userDetails.getEmail());
 
         User savedUser = userRepository.save(user);
+        log.info("User updated: id={}", id);
         return new UserDTO(savedUser);
     }
 
     public UserDTO createUser(User user) {
         User savedUser = userRepository.save(user);
+        log.info("User profile created: id={}", savedUser.getId());
         return new UserDTO(savedUser);
     }
 
     public boolean deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new com.skillsync.userservice.exception.UserNotFoundException("User with id " + id + " not found");
+            throw new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND);
         }
         userRepository.deleteById(id);
+        log.info("User deleted: id={}", id);
         return true;
     }
 
     public UserDTO blockUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new com.skillsync.userservice.exception.UserNotFoundException("User with id " + id + " not found"));
+                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
         user.setStatus(User.Status.BLOCKED);
         User savedUser = userRepository.save(user);
+        log.warn("User blocked: id={}", id);
         return new UserDTO(savedUser);
     }
 
     public UserDTO unblockUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new com.skillsync.userservice.exception.UserNotFoundException("User with id " + id + " not found"));
+                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
         user.setStatus(User.Status.ACTIVE);
         User savedUser = userRepository.save(user);
+        log.info("User unblocked: id={}", id);
         return new UserDTO(savedUser);
     }
 }

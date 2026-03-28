@@ -21,7 +21,7 @@ public class RabbitMQConfig {
     public static final String REVIEW_SUBMITTED_MENTOR_QUEUE = "review.submitted.mentor.queue";
 
     @Bean
-    public TopicExchange exchange() {
+    public TopicExchange topicExchange() {
         return new TopicExchange(EXCHANGE);
     }
 
@@ -32,7 +32,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding reviewSubmittedMentorBinding() {
-        return BindingBuilder.bind(reviewSubmittedMentorQueue()).to(exchange()).with(REVIEW_SUBMITTED_KEY);
+        return BindingBuilder.bind(reviewSubmittedMentorQueue()).to(topicExchange()).with(REVIEW_SUBMITTED_KEY);
     }
 
     @Bean

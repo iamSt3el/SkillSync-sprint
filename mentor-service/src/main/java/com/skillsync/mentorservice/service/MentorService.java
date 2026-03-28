@@ -21,21 +21,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MentorService {
+
+    private static final String MENTOR_NOT_FOUND = "Mentor not found with id: ";
 
     private final MentorRepository mentorRepository;
     private final UserServiceClient userServiceClient;
     private final SkillServiceClient skillServiceClient;
     private final RabbitTemplate rabbitTemplate;
 
-    // POST /mentors/apply
     @Transactional
     public MentorResponse applyAsMentor(MentorApplyRequest request, String email) {
-        // Resolve the real userId from user-service using the authenticated user's email
         UserResponse user = userServiceClient.getUserByEmail(email);
         Long userId = user.getId();
 
@@ -72,28 +71,25 @@ public class MentorService {
         return buildMentorResponse(saved);
     }
 
-    // GET /mentors/{id}
     @Transactional(readOnly = true)
     public MentorResponse getMentorById(Long id) {
         Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException("Mentor not found with id: " + id));
+                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
         return buildMentorResponse(mentor);
     }
 
-    // GET /mentors (all active, no filters)
     @Transactional(readOnly = true)
     public List<MentorResponse> getAllActiveMentors() {
         return mentorRepository.findByStatus(MentorStatus.ACTIVE)
                 .stream()
                 .map(this::buildMentorResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // PUT /mentors/{id}/availability
     @Transactional
     public MentorResponse updateAvailability(Long id, AvailabilityRequest request, Long userId) {
         Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException("Mentor not found with id: " + id));
+                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
         if (!mentor.getUserId().equals(userId)) {
             throw new SecurityException("You can only update your own availability");
         }
@@ -101,11 +97,10 @@ public class MentorService {
         return buildMentorResponse(mentorRepository.save(mentor));
     }
 
-    // PUT /mentors/{id}/approve — admin only
     @Transactional
     public MentorResponse approveMentor(Long id) {
         Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException("Mentor not found with id: " + id));
+                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
         mentor.setStatus(MentorStatus.ACTIVE);
         Mentor saved = mentorRepository.save(mentor);
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.MENTOR_APPROVED_KEY,
@@ -113,24 +108,21 @@ public class MentorService {
         return buildMentorResponse(saved);
     }
 
-    // GET /mentors (all, including pending — admin only)
     @Transactional(readOnly = true)
     public List<MentorResponse> getAllMentors() {
         return mentorRepository.findAll()
                 .stream()
                 .map(this::buildMentorResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // DELETE /admin/mentors/{id}
     @Transactional
     public void deleteMentor(Long id) {
         Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException("Mentor not found with id: " + id));
+                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
         mentorRepository.delete(mentor);
     }
 
-    // GET /mentors/{id}/exists — internal endpoint for session-service
     @Transactional(readOnly = true)
     public boolean mentorExists(Long id) {
         return mentorRepository.findById(id)
@@ -138,11 +130,10 @@ public class MentorService {
                 .isPresent();
     }
 
-    // Called internally to update rating after a review is submitted
     @Transactional
     public void updateRating(Long mentorId, double newRating) {
         Mentor mentor = mentorRepository.findById(mentorId)
-                .orElseThrow(() -> new MentorNotFoundException("Mentor not found with id: " + mentorId));
+                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + mentorId));
 
         int totalReviews = mentor.getReviewCount() + 1;
         double updatedRating = ((mentor.getRating() * mentor.getReviewCount()) + newRating) / totalReviews;
@@ -156,7 +147,7 @@ public class MentorService {
         List<String> skillNames = mentor.getMentorSkills().stream()
                 .map(MentorSkill::getSkillName)
                 .filter(name -> name != null && !name.isBlank())
-                .collect(Collectors.toList());
+                .toList();
 
         return MentorResponse.builder()
                 .id(mentor.getId())

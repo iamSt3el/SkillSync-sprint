@@ -2,7 +2,6 @@ package com.skillsync.authservice.security;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -53,23 +52,19 @@ public class JwtFilter extends OncePerRequestFilter {
 				log.warn("JWT validation failed: {}", e.getMessage());
 			}
 		}
-		//if email exists and user not already authenticated
-		if(email!=null && SecurityContextHolder.getContext().getAuthentication()==null)
+		//if email exists, user not already authenticated, and token is valid
+		if(email != null && SecurityContextHolder.getContext().getAuthentication() == null
+				&& jwtUtil.isTokenValid(token))
 		{
-			//validate token
-			if(jwtUtil.isTokenValid(token))
-			{
 				//extract roles
 				List<String> roles = jwtUtil.extractRoles(token);
 				//convert roles -> authorities
-				List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-				//create authentication object
-				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email,  null, authorities);
-				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				
-				//set authentication in context
-				SecurityContextHolder.getContext().setAuthentication(authentication);
-			}
+				List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
+			//create authentication object
+			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
+			authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+			//set authentication in context
+			SecurityContextHolder.getContext().setAuthentication(authentication);
 		}
 		
 		//continue filter chain

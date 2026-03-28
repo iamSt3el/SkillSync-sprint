@@ -100,6 +100,16 @@ public class SessionController {
     }
 
     /**
+     * GET /sessions/{id}
+     * Internal endpoint for Payment Service to fetch session details.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<SessionResponse> getSessionById(@PathVariable Long id) {
+        log.info("GET /sessions/{}", id);
+        return ResponseEntity.ok(sessionService.getSessionById(id));
+    }
+
+    /**
      * GET /sessions/{sessionId}/status
      * Internal endpoint for Review Service to validate a session is COMPLETED.
      */

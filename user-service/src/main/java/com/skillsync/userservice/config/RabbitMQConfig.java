@@ -1,8 +1,11 @@
 package com.skillsync.userservice.config;
 
 
-import org.springframework.amqp.core.*;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -21,8 +24,8 @@ public class RabbitMQConfig {
 
     // ─── Exchange ──────────────────────────────────────────────
     @Bean
-    public TopicExchange exchange() {
-        return new TopicExchange(EXCHANGE);
+    public TopicExchange topicExchange() {
+        return ExchangeBuilder.topicExchange(EXCHANGE).build();
     }
 
     // ─── Queues ────────────────────────────────────────────────
@@ -41,7 +44,7 @@ public class RabbitMQConfig {
     public Binding sessionBookedBinding() {
         return BindingBuilder
             .bind(userBookedQueue())
-            .to(exchange())
+            .to(topicExchange())
             .with(USER_REGISTERED_KEY);
     }
 
@@ -49,7 +52,7 @@ public class RabbitMQConfig {
     public Binding mentorApprovedUserBinding() {
         return BindingBuilder
             .bind(mentorApprovedUserQueue())
-            .to(exchange())
+            .to(topicExchange())
             .with(MENTOR_APPROVED_KEY);
     }
 
@@ -67,13 +70,4 @@ public class RabbitMQConfig {
         return rabbitTemplate;
     }
 
-    // ─── Listener Container Factory (for consuming) ────────────
-    @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
-            ConnectionFactory connectionFactory) {
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(jsonMessageConverter());
-        return factory;
-    }
 }

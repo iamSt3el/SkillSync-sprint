@@ -6,41 +6,42 @@ import com.skillsync.skillservice.entity.Skill;
 import com.skillsync.skillservice.exception.SkillNotFoundException;
 import com.skillsync.skillservice.repository.SkillRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SkillService {
 
     private final SkillRepository skillRepository;
 
-    // POST /skills  (admin only — enforced at Gateway level)
     @Transactional
     public SkillResponse createSkill(SkillRequest request) {
         if (skillRepository.existsByNameIgnoreCase(request.getName())) {
+            log.warn("Skill creation rejected — already exists: name={}", request.getName());
             throw new IllegalStateException("Skill already exists: " + request.getName());
         }
         Skill skill = Skill.builder()
                 .name(request.getName().trim())
                 .category(request.getCategory().trim())
                 .build();
-        return toResponse(skillRepository.save(skill));
+        SkillResponse response = toResponse(skillRepository.save(skill));
+        log.info("Skill created: id={}, name={}, category={}", response.getId(), response.getName(), response.getCategory());
+        return response;
     }
 
-    // GET /skills
     @Transactional(readOnly = true)
     public List<SkillResponse> getAllSkills() {
         return skillRepository.findAll()
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    // GET /skills/{id}
     @Transactional(readOnly = true)
     public SkillResponse getSkillById(Long id) {
         return skillRepository.findById(id)
@@ -48,15 +49,14 @@ public class SkillService {
                 .orElseThrow(() -> new SkillNotFoundException("Skill not found with id: " + id));
     }
 
-    // DELETE /admin/skills/{id}
     @Transactional
     public void deleteSkill(Long id) {
         Skill skill = skillRepository.findById(id)
                 .orElseThrow(() -> new SkillNotFoundException("Skill not found with id: " + id));
         skillRepository.delete(skill);
+        log.info("Skill deleted: id={}", id);
     }
 
-    // Private helper
     private SkillResponse toResponse(Skill skill) {
         return SkillResponse.builder()
                 .id(skill.getId())

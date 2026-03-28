@@ -17,6 +17,8 @@ public interface SessionService {
 
     List<SessionResponse> getSessionsByUserId(Long userId, Long requesterId, String role);
 
+    SessionResponse getSessionById(Long sessionId);
+
     String getSessionStatus(Long sessionId);
 
     SessionResponse completeSession(Long sessionId, Long userId);

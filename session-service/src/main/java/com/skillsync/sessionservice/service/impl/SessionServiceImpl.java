@@ -1,7 +1,6 @@
 package com.skillsync.sessionservice.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
@@ -114,7 +113,13 @@ public class SessionServiceImpl implements SessionService {
                 .findByLearnerIdOrMentorId(userId, userId)
                 .stream()
                 .map(sessionMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SessionResponse getSessionById(Long sessionId) {
+        return sessionMapper.toResponse(findSessionOrThrow(sessionId));
     }
 
     @Override
@@ -159,7 +164,7 @@ public class SessionServiceImpl implements SessionService {
         return sessionRepository.findAll()
                 .stream()
                 .map(sessionMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Session findSessionOrThrow(Long id) {

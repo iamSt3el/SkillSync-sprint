@@ -39,14 +39,14 @@ public class DataInitializer implements CommandLineRunner {
         if (!roleRepository.existsByName("ROLE_MENTOR")) {
             roleRepository.save(new Role("ROLE_MENTOR"));
         }
-        Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseGet(() -> {
-            return roleRepository.save(new Role("ROLE_ADMIN"));
-        });
+        Role adminRole = roleRepository.findByName("ROLE_ADMIN")
+                .orElseGet(() -> roleRepository.save(new Role("ROLE_ADMIN")));
 
         // Seed default admin user
         if (!userRepository.existsByEmail("admin@skillsync.com")) {
+            String adminPassword = System.getenv().getOrDefault("ADMIN_INITIAL_PASSWORD", "changeme");
             User admin = new User("admin@skillsync.com",
-                                  passwordEncoder.encode("Admin@123"),
+                                  passwordEncoder.encode(adminPassword),
                                   "admin");
             User savedAdmin = userRepository.save(admin);
 

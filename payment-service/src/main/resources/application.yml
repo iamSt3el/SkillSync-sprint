@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: payment-service
+  config:
+    import: "optional:configserver:http://localhost:8888"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,info
+  endpoint:
+    prometheus:
+      enabled: true

@@ -3,20 +3,21 @@ package com.skillsync.userservice.controller.internal;
 import com.skillsync.userservice.dto.UserDTO;
 import com.skillsync.userservice.dto.UserEmailDTO;
 import com.skillsync.userservice.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-//import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/internal/users")
 public class InternalUserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public InternalUserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {

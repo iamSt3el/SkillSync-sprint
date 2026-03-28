@@ -277,6 +277,30 @@ services:
     networks:
       - skillsync-net
 
+  payment-service:
+    build: ./payment-service
+    restart: on-failure
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
+      SPRING_APPLICATION_NAME: payment-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      RAZORPAY_KEY_ID: rzp_test_SWGUsISMJTk4IH
+      RAZORPAY_KEY_SECRET: I8krFpGNIU2r4iuT2j3xxtrn
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      zipkin:
+        condition: service_started
+    networks:
+      - skillsync-net
+
   # ── API Gateway (single public entry point) ───────────────────────────────────
 
   api-gateway:

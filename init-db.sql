@@ -4,3 +4,4 @@ CREATE DATABASE IF NOT EXISTS mentor_service;
 CREATE DATABASE IF NOT EXISTS `reviews-service`;
 CREATE DATABASE IF NOT EXISTS `notification-service`;
 CREATE DATABASE IF NOT EXISTS `group-service`;
+CREATE DATABASE IF NOT EXISTS payment_service;

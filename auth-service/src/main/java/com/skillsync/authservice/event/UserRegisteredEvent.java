@@ -1,7 +1,5 @@
 package com.skillsync.authservice.event;
 
-import com.skillsync.authservice.entity.Role;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,11 +1,12 @@
 package com.skillsync.notification_service.config;
 
-import org.springframework.amqp.core.*;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
-import org.springframework.amqp.support.converter.Jackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -40,11 +41,16 @@ public class RabbitMQConfig {
     public static final String REVIEW_SUBMITTED_QUEUE   = "notification.review.submitted.queue";
     public static final String REVIEW_SUBMITTED_KEY     = "review.submitted";
 
+    public static final String PAYMENT_SUCCESS_QUEUE    = "notification.payment.success.queue";
+    public static final String PAYMENT_SUCCESS_KEY      = "payment.success";
+    public static final String PAYMENT_FAILED_QUEUE     = "notification.payment.failed.queue";
+    public static final String PAYMENT_FAILED_KEY       = "payment.failed";
+
 
     // ─── Exchange ──────────────────────────────────────────────
     @Bean
-    public TopicExchange exchange() {
-        return new TopicExchange(EXCHANGE);
+    public TopicExchange topicExchange() {
+        return ExchangeBuilder.topicExchange(EXCHANGE).build();
     }
 
     // ─── Queues ────────────────────────────────────────────────
@@ -69,52 +75,52 @@ public class RabbitMQConfig {
     @Bean public Queue sessionCompletedNotifQueue() { return new Queue(SESSION_COMPLETED_QUEUE, true); }
     @Bean public Queue mentorApprovedNotifQueue()   { return new Queue(MENTOR_APPROVED_QUEUE,   true); }
     @Bean public Queue reviewSubmittedNotifQueue()  { return new Queue(REVIEW_SUBMITTED_QUEUE,  true); }
+    @Bean public Queue paymentSuccessNotifQueue()   { return new Queue(PAYMENT_SUCCESS_QUEUE,   true); }
+    @Bean public Queue paymentFailedNotifQueue()    { return new Queue(PAYMENT_FAILED_QUEUE,    true); }
 
     // ─── Bindings ──────────────────────────────────────────────
     @Bean
     public Binding sessionBookedBinding() {
         return BindingBuilder
             .bind(sessionBookedQueue())
-            .to(exchange())
+            .to(topicExchange())
             .with(SESSION_BOOKED_KEY);
     }
-    
+
     @Bean
     public Binding userRegisteredBinding() {
-    	return BindingBuilder
-    			.bind(userRegisteredQueue())
-    			.to(exchange())
-    			.with(USER_REGISTERED_KEY);
+        return BindingBuilder
+                .bind(userRegisteredQueue())
+                .to(topicExchange())
+                .with(USER_REGISTERED_KEY);
     }
-    
+
     @Bean
     public Binding groupMemberJoinedBinding() {
-    	return BindingBuilder
-    			.bind(groupNotificationQueue())
-    			.to(exchange())
-    			.with(GROUP_MEMBER_JOINED_KEY);
+        return BindingBuilder
+                .bind(groupNotificationQueue())
+                .to(topicExchange())
+                .with(GROUP_MEMBER_JOINED_KEY);
     }
     
     @Bean
     public Binding groupMemberLeftBinding() {
-    	return BindingBuilder.bind(groupNotificationQueue()).to(exchange()).with(GROUP_MEMBER_LEFT_KEY);
+    	return BindingBuilder.bind(groupNotificationQueue()).to(topicExchange()).with(GROUP_MEMBER_LEFT_KEY);
     }
 
-    @Bean public Binding sessionAcceptedNotifBinding()  { return BindingBuilder.bind(sessionAcceptedNotifQueue()).to(exchange()).with(SESSION_ACCEPTED_KEY); }
-    @Bean public Binding sessionRejectedNotifBinding()  { return BindingBuilder.bind(sessionRejectedNotifQueue()).to(exchange()).with(SESSION_REJECTED_KEY); }
-    @Bean public Binding sessionCancelledNotifBinding() { return BindingBuilder.bind(sessionCancelledNotifQueue()).to(exchange()).with(SESSION_CANCELLED_KEY); }
-    @Bean public Binding sessionCompletedNotifBinding() { return BindingBuilder.bind(sessionCompletedNotifQueue()).to(exchange()).with(SESSION_COMPLETED_KEY); }
-    @Bean public Binding mentorApprovedNotifBinding()   { return BindingBuilder.bind(mentorApprovedNotifQueue()).to(exchange()).with(MENTOR_APPROVED_KEY); }
-    @Bean public Binding reviewSubmittedNotifBinding()  { return BindingBuilder.bind(reviewSubmittedNotifQueue()).to(exchange()).with(REVIEW_SUBMITTED_KEY); }
+    @Bean public Binding sessionAcceptedNotifBinding()  { return BindingBuilder.bind(sessionAcceptedNotifQueue()).to(topicExchange()).with(SESSION_ACCEPTED_KEY); }
+    @Bean public Binding sessionRejectedNotifBinding()  { return BindingBuilder.bind(sessionRejectedNotifQueue()).to(topicExchange()).with(SESSION_REJECTED_KEY); }
+    @Bean public Binding sessionCancelledNotifBinding() { return BindingBuilder.bind(sessionCancelledNotifQueue()).to(topicExchange()).with(SESSION_CANCELLED_KEY); }
+    @Bean public Binding sessionCompletedNotifBinding() { return BindingBuilder.bind(sessionCompletedNotifQueue()).to(topicExchange()).with(SESSION_COMPLETED_KEY); }
+    @Bean public Binding mentorApprovedNotifBinding()   { return BindingBuilder.bind(mentorApprovedNotifQueue()).to(topicExchange()).with(MENTOR_APPROVED_KEY); }
+    @Bean public Binding reviewSubmittedNotifBinding()  { return BindingBuilder.bind(reviewSubmittedNotifQueue()).to(topicExchange()).with(REVIEW_SUBMITTED_KEY); }
+    @Bean public Binding paymentSuccessNotifBinding()   { return BindingBuilder.bind(paymentSuccessNotifQueue()).to(topicExchange()).with(PAYMENT_SUCCESS_KEY); }
+    @Bean public Binding paymentFailedNotifBinding()    { return BindingBuilder.bind(paymentFailedNotifQueue()).to(topicExchange()).with(PAYMENT_FAILED_KEY); }
 
     // ─── JSON Converter ────────────────────────────────────────
     @Bean
     public MessageConverter jsonMessageConverter() {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
-        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
-        typeMapper.setTypePrecedence(Jackson2JavaTypeMapper.TypePrecedence.INFERRED);
-        converter.setJavaTypeMapper(typeMapper);
-        return converter;
+        return new Jackson2JsonMessageConverter();
     }
 
     // ─── RabbitTemplate (for publishing) ───────────────────────
@@ -123,15 +129,5 @@ public class RabbitMQConfig {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(jsonMessageConverter());
         return rabbitTemplate;
-    }
-
-    // ─── Listener Container Factory (for consuming) ────────────
-    @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
-            ConnectionFactory connectionFactory) {
-        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(jsonMessageConverter());
-        return factory;
     }
 }

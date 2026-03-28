@@ -1,6 +1,7 @@
 package com.skillsync.mentorservice.feign;
 
 import com.skillsync.mentorservice.dto.response.UserResponse;
+import com.skillsync.mentorservice.exception.ServiceUnavailableException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +18,6 @@ public class UserServiceClientFallback implements UserServiceClient {
 
     @Override
     public UserResponse getUserByEmail(String email) {
-        throw new RuntimeException("User service unavailable");
+        throw new ServiceUnavailableException("User service unavailable");
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skillsync.notification_service.dto.NotificationResponseDTO;
-import com.skillsync.notification_service.entity.Notification;
 import com.skillsync.notification_service.service.NotificationService;
 
 import lombok.AllArgsConstructor;

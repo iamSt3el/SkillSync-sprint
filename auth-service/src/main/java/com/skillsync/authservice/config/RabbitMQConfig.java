@@ -1,7 +1,6 @@
 package com.skillsync.authservice.config;
 
 import org.springframework.amqp.core.*;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -19,7 +18,7 @@ public class RabbitMQConfig {
     public static final String MENTOR_APPROVED_KEY       = "mentor.approved";
 
     @Bean
-    public TopicExchange exchange() {
+    public TopicExchange topicExchange() {
         return new TopicExchange(EXCHANGE);
     }
 
@@ -30,7 +29,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding mentorApprovedAuthBinding() {
-        return BindingBuilder.bind(mentorApprovedAuthQueue()).to(exchange()).with(MENTOR_APPROVED_KEY);
+        return BindingBuilder.bind(mentorApprovedAuthQueue()).to(topicExchange()).with(MENTOR_APPROVED_KEY);
     }
 
     @Bean

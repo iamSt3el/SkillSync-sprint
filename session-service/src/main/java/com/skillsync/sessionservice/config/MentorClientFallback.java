@@ -1,5 +1,6 @@
 package com.skillsync.sessionservice.config;
 
+import com.skillsync.sessionservice.exception.ServiceUnavailableException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +16,6 @@ public class MentorClientFallback implements MentorClient {
     @Override
     public Boolean mentorExists(Long mentorId) {
         log.warn("mentor-service is unavailable. Falling back for mentorId={}", mentorId);
-        //return true;  // fail-open: allow booking even if mentor-service is down
-        //return false;// Fail-closed → reject booking
-        
-        throw new RuntimeException("Mentor Service Unavailable");
+        throw new ServiceUnavailableException("Mentor Service Unavailable");
     }
 }

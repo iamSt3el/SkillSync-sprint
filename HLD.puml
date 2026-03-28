@@ -1,0 +1,150 @@
+@startuml SkillSync-HLD
+
+skinparam defaultFontSize 11
+skinparam defaultFontName Arial
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+
+skinparam actor {
+    BackgroundColor #E0F2FE
+    BorderColor #0284C7
+    FontColor #0C4A6E
+}
+
+skinparam component {
+    BackgroundColor #DBEAFE
+    BorderColor #3B82F6
+    FontColor #1E3A5F
+}
+
+skinparam database {
+    BackgroundColor #F1F5F9
+    BorderColor #94A3B8
+    FontColor #334155
+}
+
+skinparam queue {
+    BackgroundColor #FEF9C3
+    BorderColor #CA8A04
+    FontColor #713F12
+}
+
+skinparam rectangle {
+    BackgroundColor #F8FAFC
+    BorderColor #CBD5E1
+    FontColor #374151
+    FontStyle bold
+}
+
+title SkillSync — High-Level Design
+
+' ── Client ────────────────────────────────────────────────
+actor "Client\n(Web / Mobile)" as CLIENT
+
+' ── Infrastructure ────────────────────────────────────────
+rectangle "Infrastructure" as INFRA {
+    component "API Gateway\n:9090\nJWT Auth · Routing" as GW #EDE9FE
+    component "Eureka :8761\nService Discovery" as EUR #EDE9FE
+    component "Config Server :8888\nCentralised Config" as CFG #EDE9FE
+}
+
+' ── Microservices ─────────────────────────────────────────
+rectangle "Microservices  —  all register with Eureka on startup and fetch config from Config Server" as SVCS {
+    component "Auth\n:8081" as AUTH
+    component "User\n:8082" as USER
+    component "Mentor\n:8083" as MENTOR
+    component "Skill\n:8084" as SKILL
+    component "Group\n:8086" as GROUP
+    component "Session\n:8085" as SESSION
+    component "Review\n:8087" as REVIEW
+    component "Notification\n:8088" as NOTIF
+}
+
+' ── Async Messaging ───────────────────────────────────────
+queue "RabbitMQ :5672\nAsync Event Bus" as MQ
+
+' ── Data Layer ────────────────────────────────────────────
+rectangle "MySQL  —  one dedicated schema per service" as DATA {
+    database "auth" as DB_A
+    database "user" as DB_U
+    database "mentor" as DB_M
+    database "skill" as DB_S
+    database "group" as DB_G
+    database "session" as DB_SE
+    database "review" as DB_R
+    database "notif" as DB_N
+}
+
+' ── Observability ─────────────────────────────────────────
+rectangle "Observability" as OBS {
+    component "Prometheus\nMetrics" as PROM #D1FAE5
+    component "Zipkin\nTracing" as ZIP #D1FAE5
+    component "Grafana\nDashboards" as GRAF #D1FAE5
+}
+
+' ══════════════════════════════════════════════════════════
+' CONNECTIONS
+' ══════════════════════════════════════════════════════════
+
+' ── Request Routing ───────────────────────────────────────
+CLIENT -right-> GW : HTTPS
+
+GW -right-> AUTH    : /auth/**
+GW -right-> USER    : /users/**
+GW -right-> MENTOR  : /mentors/**
+GW -right-> SKILL   : /skills/**
+GW -right-> GROUP   : /groups/**
+GW -right-> SESSION : /sessions/**
+GW -right-> REVIEW  : /reviews/**
+GW -right-> NOTIF   : /notifications/**
+
+GW .up.> EUR : discover
+
+' ── Synchronous Feign Calls ───────────────────────────────
+MENTOR -right-> SKILL    : GET /skills/{id}
+MENTOR -right-> USER     : GET /users/email
+SESSION -right-> MENTOR  : mentor exists?
+NOTIF -right-> USER      : GET /users/{id}
+
+' ── Async Events — Producers ──────────────────────────────
+AUTH    -down-> MQ : user.registered
+MENTOR  -down-> MQ : mentor.approved
+REVIEW  -down-> MQ : review.submitted
+SESSION -down-> MQ : session.*
+GROUP   -down-> MQ : group.member.*
+
+' ── Async Events — Consumers ──────────────────────────────
+MQ -up-> USER   : user.registered
+MQ -up-> AUTH   : mentor.approved
+MQ -up-> MENTOR : review.submitted
+MQ -up-> NOTIF  : all events
+
+' ── Persistence ───────────────────────────────────────────
+AUTH    -down-> DB_A
+USER    -down-> DB_U
+MENTOR  -down-> DB_M
+SKILL   -down-> DB_S
+GROUP   -down-> DB_G
+SESSION -down-> DB_SE
+REVIEW  -down-> DB_R
+NOTIF   -down-> DB_N
+
+' ── Observability ─────────────────────────────────────────
+AUTH    -down-> PROM : metrics
+USER    -down-> PROM
+MENTOR  -down-> PROM
+SESSION -down-> PROM
+SKILL   -down-> PROM
+GROUP   -down-> PROM
+REVIEW  -down-> PROM
+NOTIF   -down-> PROM
+
+AUTH    ..> ZIP : traces
+MENTOR  ..> ZIP
+SESSION ..> ZIP
+
+PROM -right-> GRAF
+
+@enduml

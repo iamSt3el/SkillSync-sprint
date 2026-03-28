@@ -78,4 +78,18 @@ public class NotificationEventConsumer {
 				"You received a new " + event.getRating() + "-star review");
 	}
 
+	@RabbitListener(queues = RabbitMQConfig.PAYMENT_SUCCESS_QUEUE)
+	public void handlePaymentSuccess(PaymentSuccessEvent event) {
+		notificationService.createNotification(event.getLearnerId(), NotificationType.PAYMENT_SUCCESS,
+				"Payment of " + event.getCurrency() + " " + event.getAmount() + " confirmed. Your session is now booked!");
+		notificationService.createNotification(event.getMentorId(), NotificationType.PAYMENT_SUCCESS,
+				"Payment received for your upcoming session.");
+	}
+
+	@RabbitListener(queues = RabbitMQConfig.PAYMENT_FAILED_QUEUE)
+	public void handlePaymentFailed(PaymentFailedEvent event) {
+		notificationService.createNotification(event.getLearnerId(), NotificationType.PAYMENT_FAILED,
+				"Payment failed for your session. Reason: " + event.getReason() + ". The session has been cancelled.");
+	}
+
 }

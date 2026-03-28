@@ -1,9 +1,6 @@
 package com.skillsync.authservice.service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -67,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
 		user = userRepository.save(user);
 
 		List<String> roles = user.getUserRoles().stream().map(ur -> ur.getRole().getName())
-				.collect(Collectors.toList());
+				.toList();
 
 		String token = jwtUtil.generateToken(user.getEmail(), roles, user.getId());
 		log.info("User registered: {}", user.getEmail());
@@ -83,14 +80,14 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	public AuthResponse login(LoginRequest request) {
 
-		User user = userRepository.findByEmail(request.email()).orElseThrow(() -> new InvalidCredentialsException());
+		User user = userRepository.findByEmail(request.email()).orElseThrow(InvalidCredentialsException::new);
 
 		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
 			throw new InvalidCredentialsException(); // ← was RuntimeException
 		}
 
 		List<String> roles = user.getUserRoles().stream().map(ur -> ur.getRole().getName())
-				.collect(Collectors.toList());
+				.toList();
 
 		String token = jwtUtil.generateToken(user.getEmail(), roles, user.getId());
 		log.info("User logged in: {}", user.getEmail());
@@ -107,10 +104,10 @@ public class AuthServiceImpl implements AuthService {
 
 		String email = jwtUtil.extractEmail(token);
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new InvalidCredentialsException());
+		User user = userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
 
 		List<String> roles = user.getUserRoles().stream().map(ur -> ur.getRole().getName())
-				.collect(Collectors.toList());
+				.toList();
 
 		String newToken = jwtUtil.generateToken(email, roles, user.getId());
 		log.info("Token refreshed for: {}", email);

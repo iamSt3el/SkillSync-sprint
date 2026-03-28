@@ -27,9 +27,14 @@ public class RabbitMQConfig {
     public static final String SESSION_CANCELLED_QUEUE  = "session.cancelled.queue";
     public static final String SESSION_COMPLETED_QUEUE  = "session.completed.queue";
 
+    public static final String PAYMENT_SUCCESS_KEY              = "payment.success";
+    public static final String PAYMENT_FAILED_KEY               = "payment.failed";
+    public static final String PAYMENT_SUCCESS_SESSION_QUEUE    = "session.payment.success.queue";
+    public static final String PAYMENT_FAILED_SESSION_QUEUE     = "session.payment.failed.queue";
+
     // ─── Exchange ──────────────────────────────────────────────
     @Bean
-    public TopicExchange exchange() {
+    public TopicExchange topicExchange() {
         return new TopicExchange(EXCHANGE);
     }
 
@@ -62,28 +67,34 @@ public class RabbitMQConfig {
     // ─── Bindings ──────────────────────────────────────────────
     @Bean
     public Binding sessionBookedBinding() {
-        return BindingBuilder.bind(sessionBookedQueue()).to(exchange()).with(SESSION_BOOKED_KEY);
+        return BindingBuilder.bind(sessionBookedQueue()).to(topicExchange()).with(SESSION_BOOKED_KEY);
     }
 
     @Bean
     public Binding sessionAcceptedBinding() {
-        return BindingBuilder.bind(sessionAcceptedQueue()).to(exchange()).with(SESSION_ACCEPTED_KEY);
+        return BindingBuilder.bind(sessionAcceptedQueue()).to(topicExchange()).with(SESSION_ACCEPTED_KEY);
     }
 
     @Bean
     public Binding sessionRejectedBinding() {
-        return BindingBuilder.bind(sessionRejectedQueue()).to(exchange()).with(SESSION_REJECTED_KEY);
+        return BindingBuilder.bind(sessionRejectedQueue()).to(topicExchange()).with(SESSION_REJECTED_KEY);
     }
 
     @Bean
     public Binding sessionCancelledBinding() {
-        return BindingBuilder.bind(sessionCancelledQueue()).to(exchange()).with(SESSION_CANCELLED_KEY);
+        return BindingBuilder.bind(sessionCancelledQueue()).to(topicExchange()).with(SESSION_CANCELLED_KEY);
     }
 
     @Bean
     public Binding sessionCompletedBinding() {
-        return BindingBuilder.bind(sessionCompletedQueue()).to(exchange()).with(SESSION_COMPLETED_KEY);
+        return BindingBuilder.bind(sessionCompletedQueue()).to(topicExchange()).with(SESSION_COMPLETED_KEY);
     }
+
+    @Bean public Queue paymentSuccessSessionQueue() { return new Queue(PAYMENT_SUCCESS_SESSION_QUEUE, true); }
+    @Bean public Queue paymentFailedSessionQueue()  { return new Queue(PAYMENT_FAILED_SESSION_QUEUE,  true); }
+
+    @Bean public Binding paymentSuccessSessionBinding() { return BindingBuilder.bind(paymentSuccessSessionQueue()).to(topicExchange()).with(PAYMENT_SUCCESS_KEY); }
+    @Bean public Binding paymentFailedSessionBinding()  { return BindingBuilder.bind(paymentFailedSessionQueue()).to(topicExchange()).with(PAYMENT_FAILED_KEY); }
 
     // ─── JSON Converter ────────────────────────────────────────
     @Bean

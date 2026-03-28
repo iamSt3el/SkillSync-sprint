@@ -11,5 +11,7 @@ public enum NotificationType {
 	MENTOR_APPROVED,
 	REMAINDER,
 	JOINED,
-	LEFT
+	LEFT,
+	PAYMENT_SUCCESS,
+	PAYMENT_FAILED
 }
