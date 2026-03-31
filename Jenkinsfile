@@ -47,8 +47,9 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GCP_KEY')]) {
                     sh '''
-                        gcloud auth activate-service-account --key-file=$GCP_KEY
+                        export GOOGLE_APPLICATION_CREDENTIALS=$GCP_KEY
                         gcloud config set project $PROJECT_ID
+                        gcloud auth application-default print-access-token > /dev/null
                         gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
                     '''
                 }
@@ -78,7 +79,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GCP_KEY')]) {
                     sh '''
-                        gcloud auth activate-service-account --key-file=$GCP_KEY
+                        export GOOGLE_APPLICATION_CREDENTIALS=$GCP_KEY
                         gcloud container clusters get-credentials $CLUSTER --region $REGION --project $PROJECT_ID
                     '''
                 }
