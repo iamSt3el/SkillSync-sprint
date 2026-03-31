@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skillsync-redirects
+  namespace: skillsync
+  annotations:
+    nginx.ingress.kubernetes.io/permanent-redirect: "$scheme://$host$request_uri/"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /eureka
+            pathType: Exact
+            backend:
+              service:
+                name: eureka-server
+                port:
+                  number: 8761
+          - path: /rabbitmq
+            pathType: Exact
+            backend:
+              service:
+                name: rabbitmq
+                port:
+                  number: 15672
+          - path: /zipkin
+            pathType: Exact
+            backend:
+              service:
+                name: zipkin
+                port:
+                  number: 9411
+          - path: /grafana
+            pathType: Exact
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
