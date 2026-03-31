@@ -3,36 +3,32 @@ kind: Ingress
 metadata:
   name: eureka-static-ingress
   namespace: skillsync
-  # No rewrite-target here — passes /eureka/css/*, /eureka/js/* etc.
-  # straight to Eureka which serves them from META-INF/resources/eureka/
+  annotations:
+    # Paths like /eureka/css(/|$)(.*) are longer than the main ingress
+    # path /eureka(/|$)(.*) (16 chars), so nginx sorts them first and
+    # they win. The rewrite reconstructs the full path for Eureka.
+    nginx.ingress.kubernetes.io/rewrite-target: /eureka/$1$2$3
 spec:
   ingressClassName: nginx
   rules:
     - http:
         paths:
-          - path: /eureka/css
-            pathType: Prefix
+          - path: /eureka/(css)(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: eureka-server
                 port:
                   number: 8761
-          - path: /eureka/js
-            pathType: Prefix
+          - path: /eureka/(js)(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: eureka-server
                 port:
                   number: 8761
-          - path: /eureka/fonts
-            pathType: Prefix
-            backend:
-              service:
-                name: eureka-server
-                port:
-                  number: 8761
-          - path: /lastn
-            pathType: Prefix
+          - path: /eureka/(fonts)(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: eureka-server

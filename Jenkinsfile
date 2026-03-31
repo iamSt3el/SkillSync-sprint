@@ -159,6 +159,8 @@ pipeline {
                 sh '''
                     kubectl apply -f k8s/ingress.yaml
                     kubectl apply -f k8s/ingress-redirects.yaml
+                    kubectl apply -f k8s/ingress-tools.yaml
+                    kubectl apply -f k8s/ingress-eureka-static.yaml
                     echo "Waiting for ingress IP..."
                     kubectl get ingress skillsync-ingress -n skillsync
                 '''

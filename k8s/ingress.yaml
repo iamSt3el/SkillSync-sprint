@@ -39,29 +39,4 @@ spec:
                 port:
                   number: 15672
 
-          # Zipkin tracing UI
-          - path: /zipkin(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: zipkin
-                port:
-                  number: 9411
-
-          # Grafana dashboard
-          - path: /grafana(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: grafana
-                port:
-                  number: 3000
-
-          # Prometheus
-          - path: /prometheus(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: prometheus
-                port:
-                  number: 9090
+          # Zipkin, Grafana, Prometheus are in ingress-tools.yaml (no rewrite, they handle their own prefix)
