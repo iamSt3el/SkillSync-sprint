@@ -45,14 +45,10 @@ pipeline {
         // ── 3. Authenticate with GCP ───────────────────────────────────────────
         stage('GCP Auth') {
             steps {
-                withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GCP_KEY')]) {
-                    sh '''
-                        export GOOGLE_APPLICATION_CREDENTIALS=$GCP_KEY
-                        gcloud config set project $PROJECT_ID
-                        gcloud auth application-default print-access-token > /dev/null
-                        gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-                    '''
-                }
+                sh '''
+                    gcloud config set project $PROJECT_ID
+                    gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+                '''
             }
         }
 
@@ -77,12 +73,9 @@ pipeline {
         // ── 5. Connect kubectl to GKE ──────────────────────────────────────────
         stage('Connect to GKE') {
             steps {
-                withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GCP_KEY')]) {
-                    sh '''
-                        export GOOGLE_APPLICATION_CREDENTIALS=$GCP_KEY
-                        gcloud container clusters get-credentials $CLUSTER --region $REGION --project $PROJECT_ID
-                    '''
-                }
+                sh '''
+                    gcloud container clusters get-credentials $CLUSTER --region $REGION --project $PROJECT_ID
+                '''
             }
         }
 
