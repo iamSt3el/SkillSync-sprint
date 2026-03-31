@@ -1,6 +1,4 @@
 # Stage 1: Build
-# Note: pom.xml declares java.version=25; using Java 21 (LTS) here.
-# Update to maven:3.9-eclipse-temurin-25 if Java 25-specific features are required.
 FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /app
 COPY pom.xml .
