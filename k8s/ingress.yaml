@@ -56,3 +56,12 @@ spec:
                 name: grafana
                 port:
                   number: 3000
+
+          # Prometheus
+          - path: /prometheus(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: prometheus
+                port:
+                  number: 9090

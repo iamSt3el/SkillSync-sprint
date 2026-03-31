@@ -98,6 +98,8 @@ pipeline {
                     kubectl apply -f k8s/infrastructure/mysql.yaml
                     kubectl apply -f k8s/infrastructure/rabbitmq.yaml
                     kubectl apply -f k8s/infrastructure/zipkin.yaml
+                    kubectl apply -f k8s/infrastructure/prometheus.yaml
+                    kubectl apply -f k8s/infrastructure/grafana.yaml
 
                     # Wait for MySQL and RabbitMQ to be ready before continuing
                     kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=300s
@@ -156,6 +158,7 @@ pipeline {
             steps {
                 sh '''
                     kubectl apply -f k8s/ingress.yaml
+                    kubectl apply -f k8s/ingress-redirects.yaml
                     echo "Waiting for ingress IP..."
                     kubectl get ingress skillsync-ingress -n skillsync
                 '''
