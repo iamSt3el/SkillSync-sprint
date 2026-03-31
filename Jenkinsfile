@@ -9,6 +9,7 @@ pipeline {
         REGISTRY    = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}"
         TAG         = "${env.BUILD_NUMBER}"
         NAMESPACE   = 'skillsync'
+        USE_GKE_GCLOUD_AUTH_PLUGIN = 'True'   // required for kubectl to auth with GKE
     }
 
     tools {
@@ -99,8 +100,8 @@ pipeline {
                     kubectl apply -f k8s/infrastructure/zipkin.yaml
 
                     # Wait for MySQL and RabbitMQ to be ready before continuing
-                    kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=180s
-                    kubectl rollout status statefulset/rabbitmq -n $NAMESPACE --timeout=180s
+                    kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=300s
+                    kubectl rollout status statefulset/rabbitmq -n $NAMESPACE --timeout=300s
                 '''
             }
         }
@@ -109,9 +110,9 @@ pipeline {
         stage('Deploy config-server') {
             steps {
                 sh """
-                    kubectl set image deployment/config-server config-server=${REGISTRY}/config-server:${TAG} -n ${NAMESPACE}
                     kubectl apply -f k8s/services/config-server.yaml
-                    kubectl rollout status deployment/config-server -n ${NAMESPACE} --timeout=120s
+                    kubectl set image deployment/config-server config-server=${REGISTRY}/config-server:${TAG} -n ${NAMESPACE}
+                    kubectl rollout status deployment/config-server -n ${NAMESPACE} --timeout=300s
                 """
             }
         }
@@ -122,7 +123,7 @@ pipeline {
                 sh """
                     kubectl apply -f k8s/services/eureka-server.yaml
                     kubectl set image deployment/eureka-server eureka-server=${REGISTRY}/eureka-server:${TAG} -n ${NAMESPACE}
-                    kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=120s
+                    kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=300s
                 """
             }
         }
@@ -211,7 +212,7 @@ pipeline {
                 sh """
                     kubectl apply -f k8s/services/api-gateway.yaml
                     kubectl set image deployment/api-gateway api-gateway=${REGISTRY}/api-gateway:${TAG} -n ${NAMESPACE}
-                    kubectl rollout status deployment/api-gateway -n ${NAMESPACE} --timeout=120s
+                    kubectl rollout status deployment/api-gateway -n ${NAMESPACE} --timeout=300s
                 """
             }
         }
