@@ -18,6 +18,9 @@ spec:
           image: openzipkin/zipkin
           ports:
             - containerPort: 9411
+          env:
+            - name: JAVA_OPTS
+              value: "-Dserver.servlet.context-path=/zipkin"
           resources:
             requests:
               cpu: "100m"

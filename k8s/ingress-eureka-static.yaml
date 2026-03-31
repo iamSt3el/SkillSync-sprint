@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eureka-static-ingress
+  namespace: skillsync
+  # No rewrite-target here — passes /eureka/css/*, /eureka/js/* etc.
+  # straight to Eureka which serves them from META-INF/resources/eureka/
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /eureka/css
+            pathType: Prefix
+            backend:
+              service:
+                name: eureka-server
+                port:
+                  number: 8761
+          - path: /eureka/js
+            pathType: Prefix
+            backend:
+              service:
+                name: eureka-server
+                port:
+                  number: 8761
+          - path: /eureka/fonts
+            pathType: Prefix
+            backend:
+              service:
+                name: eureka-server
+                port:
+                  number: 8761
+          - path: /lastn
+            pathType: Prefix
+            backend:
+              service:
+                name: eureka-server
+                port:
+                  number: 8761
