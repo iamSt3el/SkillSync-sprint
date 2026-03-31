@@ -59,4 +59,4 @@ spec:
   ports:
     - port: 80
       targetPort: 9090
-  type: LoadBalancer    # public-facing — gets an external IP
+  type: ClusterIP    # traffic comes through nginx ingress

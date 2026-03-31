@@ -151,6 +151,17 @@ pipeline {
             }
         }
 
+        // ── 12. Apply Ingress ──────────────────────────────────────────────────
+        stage('Apply Ingress') {
+            steps {
+                sh '''
+                    kubectl apply -f k8s/ingress.yaml
+                    echo "Waiting for ingress IP..."
+                    kubectl get ingress skillsync-ingress -n skillsync
+                '''
+            }
+        }
+
     }
 
     post {
