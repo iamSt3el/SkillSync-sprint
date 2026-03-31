@@ -110,8 +110,7 @@ pipeline {
         stage('Deploy config-server') {
             steps {
                 sh """
-                    kubectl apply -f k8s/services/config-server.yaml
-                    kubectl set image deployment/config-server config-server=${REGISTRY}/config-server:${TAG} -n ${NAMESPACE}
+                    sed 's|:latest|:${TAG}|g' k8s/services/config-server.yaml | kubectl apply -f -
                     kubectl rollout status deployment/config-server -n ${NAMESPACE} --timeout=300s
                 """
             }
@@ -121,8 +120,7 @@ pipeline {
         stage('Deploy eureka-server') {
             steps {
                 sh """
-                    kubectl apply -f k8s/services/eureka-server.yaml
-                    kubectl set image deployment/eureka-server eureka-server=${REGISTRY}/eureka-server:${TAG} -n ${NAMESPACE}
+                    sed 's|:latest|:${TAG}|g' k8s/services/eureka-server.yaml | kubectl apply -f -
                     kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=300s
                 """
             }
@@ -131,78 +129,15 @@ pipeline {
         // ── 10. Deploy all business services in parallel ───────────────────────
         stage('Deploy Business Services') {
             parallel {
-                stage('auth-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/auth-service.yaml
-                            kubectl set image deployment/auth-service auth-service=${REGISTRY}/auth-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('user-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/user-service.yaml
-                            kubectl set image deployment/user-service user-service=${REGISTRY}/user-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('mentor-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/mentor-service.yaml
-                            kubectl set image deployment/mentor-service mentor-service=${REGISTRY}/mentor-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('skill-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/skill-service.yaml
-                            kubectl set image deployment/skill-service skill-service=${REGISTRY}/skill-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('session-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/session-service.yaml
-                            kubectl set image deployment/session-service session-service=${REGISTRY}/session-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('group-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/group-service.yaml
-                            kubectl set image deployment/group-service group-service=${REGISTRY}/group-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('review-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/review-service.yaml
-                            kubectl set image deployment/review-service review-service=${REGISTRY}/review-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('notification-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/notification-service.yaml
-                            kubectl set image deployment/notification-service notification-service=${REGISTRY}/notification-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
-                stage('payment-service') {
-                    steps {
-                        sh """
-                            kubectl apply -f k8s/services/payment-service.yaml
-                            kubectl set image deployment/payment-service payment-service=${REGISTRY}/payment-service:${TAG} -n ${NAMESPACE}
-                        """
-                    }
-                }
+                stage('auth-service')         { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/auth-service.yaml | kubectl apply -f -" } }
+                stage('user-service')         { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/user-service.yaml | kubectl apply -f -" } }
+                stage('mentor-service')       { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/mentor-service.yaml | kubectl apply -f -" } }
+                stage('skill-service')        { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/skill-service.yaml | kubectl apply -f -" } }
+                stage('session-service')      { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/session-service.yaml | kubectl apply -f -" } }
+                stage('group-service')        { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/group-service.yaml | kubectl apply -f -" } }
+                stage('review-service')       { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/review-service.yaml | kubectl apply -f -" } }
+                stage('notification-service') { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/notification-service.yaml | kubectl apply -f -" } }
+                stage('payment-service')      { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/payment-service.yaml | kubectl apply -f -" } }
             }
         }
 
@@ -210,8 +145,7 @@ pipeline {
         stage('Deploy api-gateway') {
             steps {
                 sh """
-                    kubectl apply -f k8s/services/api-gateway.yaml
-                    kubectl set image deployment/api-gateway api-gateway=${REGISTRY}/api-gateway:${TAG} -n ${NAMESPACE}
+                    sed 's|:latest|:${TAG}|g' k8s/services/api-gateway.yaml | kubectl apply -f -
                     kubectl rollout status deployment/api-gateway -n ${NAMESPACE} --timeout=300s
                 """
             }
