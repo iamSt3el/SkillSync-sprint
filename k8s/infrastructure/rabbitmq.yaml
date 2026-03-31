@@ -52,9 +52,10 @@ spec:
               command:
                 - rabbitmq-diagnostics
                 - check_port_connectivity
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            failureThreshold: 10
+            initialDelaySeconds: 30
+            timeoutSeconds: 10
+            periodSeconds: 15
+            failureThreshold: 20
           resources:
             requests:
               cpu: "100m"
