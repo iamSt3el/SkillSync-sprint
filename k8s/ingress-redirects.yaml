@@ -45,3 +45,10 @@ spec:
                 name: prometheus
                 port:
                   number: 9090
+          - path: /sonarqube
+            pathType: Exact
+            backend:
+              service:
+                name: sonarqube
+                port:
+                  number: 9000

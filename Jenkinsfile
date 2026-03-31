@@ -91,7 +91,7 @@ pipeline {
             }
         }
 
-        // ── 7. Deploy infrastructure (MySQL, RabbitMQ, Zipkin) ─────────────────
+        // ── 7. Deploy infrastructure (MySQL, RabbitMQ, Zipkin, SonarQube …) ───────
         stage('Deploy Infrastructure') {
             steps {
                 sh '''
@@ -100,6 +100,7 @@ pipeline {
                     kubectl apply -f k8s/infrastructure/zipkin.yaml
                     kubectl apply -f k8s/infrastructure/prometheus.yaml
                     kubectl apply -f k8s/infrastructure/grafana.yaml
+                    kubectl apply -f k8s/infrastructure/sonarqube.yaml
 
                     # Wait for MySQL and RabbitMQ to be ready before continuing
                     kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=300s
@@ -164,6 +165,55 @@ pipeline {
                     echo "Waiting for ingress IP..."
                     kubectl get ingress skillsync-ingress -n skillsync
                 '''
+            }
+        }
+
+        // ── 13. SonarQube Analysis ─────────────────────────────────────────────
+        // Prerequisites (one-time setup):
+        //   1. Wait for SonarQube to finish starting: http://<IP>/sonarqube
+        //   2. Login as admin / admin, change the password when prompted
+        //   3. My Account → Security → Generate Token (type: Global Analysis Token)
+        //   4. Jenkins → Manage Jenkins → Credentials → Add:
+        //        Kind: Secret text  |  ID: sonar-token  |  Secret: <token>
+        //
+        // catchError keeps the overall build GREEN if SonarQube isn't ready yet
+        // (e.g. on the very first run before it has finished starting up).
+        stage('SonarQube Analysis') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        script {
+                            def ingressIp = sh(
+                                script: "kubectl get ingress skillsync-ingress -n ${NAMESPACE} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'",
+                                returnStdout: true
+                            ).trim()
+                            def sonarUrl = "http://${ingressIp}/sonarqube"
+                            def services = [
+                                'config-server', 'eureka-server', 'api-gateway',
+                                'auth-service', 'user-service', 'mentor-service',
+                                'skill-service', 'session-service', 'group-service',
+                                'review-service', 'notification-service', 'payment-service'
+                            ]
+                            def jobs = [:]
+                            services.each { svc ->
+                                def s = svc   // capture variable for parallel closure
+                                jobs[s] = {
+                                    dir(s) {
+                                        sh """
+                                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                                                -Dsonar.host.url=${sonarUrl} \
+                                                -Dsonar.token=${SONAR_TOKEN} \
+                                                -Dsonar.projectKey=${s} \
+                                                -Dsonar.projectName=${s} \
+                                                -Dmaven.test.skip=true
+                                        """
+                                    }
+                                }
+                            }
+                            parallel jobs
+                        }
+                    }
+                }
             }
         }
 
