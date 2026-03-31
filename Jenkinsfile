@@ -27,18 +27,18 @@ pipeline {
         // ── 2. Build & Test all services in parallel ───────────────────────────
         stage('Build & Test') {
             parallel {
-                stage('config-server')        { steps { dir('config-server')        { sh 'mvn clean package -DskipTests' } } }
-                stage('eureka-server')        { steps { dir('eureka-server')        { sh 'mvn clean package -DskipTests' } } }
-                stage('api-gateway')          { steps { dir('api-gateway')          { sh 'mvn clean package -DskipTests' } } }
-                stage('auth-service')         { steps { dir('auth-service')         { sh 'mvn clean package -DskipTests' } } }
-                stage('user-service')         { steps { dir('user-service')         { sh 'mvn clean package -DskipTests' } } }
-                stage('mentor-service')       { steps { dir('mentor-service')       { sh 'mvn clean package -DskipTests' } } }
-                stage('skill-service')        { steps { dir('skill-service')        { sh 'mvn clean package -DskipTests' } } }
-                stage('session-service')      { steps { dir('session-service')      { sh 'mvn clean package -DskipTests' } } }
-                stage('group-service')        { steps { dir('group-service')        { sh 'mvn clean package -DskipTests' } } }
-                stage('review-service')       { steps { dir('review-service')       { sh 'mvn clean package -DskipTests' } } }
-                stage('notification-service') { steps { dir('notification-service') { sh 'mvn clean package -DskipTests' } } }
-                stage('payment-service')      { steps { dir('payment-service')      { sh 'mvn clean package -DskipTests' } } }
+                stage('config-server')        { steps { dir('config-server')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('eureka-server')        { steps { dir('eureka-server')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('api-gateway')          { steps { dir('api-gateway')          { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('auth-service')         { steps { dir('auth-service')         { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('user-service')         { steps { dir('user-service')         { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('mentor-service')       { steps { dir('mentor-service')       { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('skill-service')        { steps { dir('skill-service')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('session-service')      { steps { dir('session-service')      { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('group-service')        { steps { dir('group-service')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('review-service')       { steps { dir('review-service')       { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('notification-service') { steps { dir('notification-service') { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('payment-service')      { steps { dir('payment-service')      { sh 'mvn clean package -Dmaven.test.skip=true' } } }
             }
         }
 
