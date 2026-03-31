@@ -30,15 +30,15 @@ pipeline {
                 stage('config-server')        { steps { dir('config-server')        { sh 'mvn clean package -DskipTests' } } }
                 stage('eureka-server')        { steps { dir('eureka-server')        { sh 'mvn clean package -DskipTests' } } }
                 stage('api-gateway')          { steps { dir('api-gateway')          { sh 'mvn clean package -DskipTests' } } }
-                stage('auth-service')         { steps { dir('auth-service')         { sh 'mvn clean package' } } }
-                stage('user-service')         { steps { dir('user-service')         { sh 'mvn clean package' } } }
-                stage('mentor-service')       { steps { dir('mentor-service')       { sh 'mvn clean package' } } }
-                stage('skill-service')        { steps { dir('skill-service')        { sh 'mvn clean package' } } }
-                stage('session-service')      { steps { dir('session-service')      { sh 'mvn clean package' } } }
-                stage('group-service')        { steps { dir('group-service')        { sh 'mvn clean package' } } }
-                stage('review-service')       { steps { dir('review-service')       { sh 'mvn clean package' } } }
-                stage('notification-service') { steps { dir('notification-service') { sh 'mvn clean package' } } }
-                stage('payment-service')      { steps { dir('payment-service')      { sh 'mvn clean package' } } }
+                stage('auth-service')         { steps { dir('auth-service')         { sh 'mvn clean package -DskipTests' } } }
+                stage('user-service')         { steps { dir('user-service')         { sh 'mvn clean package -DskipTests' } } }
+                stage('mentor-service')       { steps { dir('mentor-service')       { sh 'mvn clean package -DskipTests' } } }
+                stage('skill-service')        { steps { dir('skill-service')        { sh 'mvn clean package -DskipTests' } } }
+                stage('session-service')      { steps { dir('session-service')      { sh 'mvn clean package -DskipTests' } } }
+                stage('group-service')        { steps { dir('group-service')        { sh 'mvn clean package -DskipTests' } } }
+                stage('review-service')       { steps { dir('review-service')       { sh 'mvn clean package -DskipTests' } } }
+                stage('notification-service') { steps { dir('notification-service') { sh 'mvn clean package -DskipTests' } } }
+                stage('payment-service')      { steps { dir('payment-service')      { sh 'mvn clean package -DskipTests' } } }
             }
         }
 
