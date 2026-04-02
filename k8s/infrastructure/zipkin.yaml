@@ -15,19 +15,19 @@ spec:
     spec:
       containers:
         - name: zipkin
-          image: openzipkin/zipkin
+          image: openzipkin/zipkin:3.4.2
           ports:
             - containerPort: 9411
           env:
             - name: JAVA_OPTS
-              value: "-Dserver.servlet.context-path=/zipkin"
+              value: "-Xms256m -Xmx700m"
           resources:
             requests:
               cpu: "100m"
-              memory: "256Mi"
+              memory: "512Mi"
             limits:
               cpu: "500m"
-              memory: "512Mi"
+              memory: "900Mi"
 
 ---
 apiVersion: v1

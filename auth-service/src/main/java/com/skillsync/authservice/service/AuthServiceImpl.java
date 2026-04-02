@@ -2,6 +2,7 @@ package com.skillsync.authservice.service;
 
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -52,7 +53,11 @@ public class AuthServiceImpl implements AuthService {
 		user.setUsername(request.username());
 		user.setEmail(request.email());
 		user.setPassword(passwordEncoder.encode(request.password()));
-		user = userRepository.save(user);
+		try {
+			user = userRepository.save(user);
+		} catch (DataIntegrityViolationException e) {
+			throw new UserAlreadyExistsException(request.email());
+		}
 
 		Role role = roleRepository.findByName("ROLE_LEARNER").orElseGet(() -> {
 			Role newRole = new Role("ROLE_LEARNER");
