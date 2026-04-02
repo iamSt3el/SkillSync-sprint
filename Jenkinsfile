@@ -100,6 +100,7 @@ pipeline {
                     kubectl apply -f k8s/infrastructure/zipkin.yaml
                     kubectl apply -f k8s/infrastructure/prometheus.yaml
                     kubectl apply -f k8s/infrastructure/grafana.yaml
+                    kubectl apply -f k8s/infrastructure/postgres-sonarqube.yaml
                     kubectl apply -f k8s/infrastructure/sonarqube.yaml
 
                     # Wait for MySQL and RabbitMQ to be ready before continuing
@@ -162,6 +163,7 @@ pipeline {
                     kubectl apply -f k8s/ingress-redirects.yaml
                     kubectl apply -f k8s/ingress-tools.yaml
                     kubectl apply -f k8s/ingress-eureka-static.yaml
+                    kubectl apply -f k8s/ingress-zipkin-api.yaml
                     echo "Waiting for ingress IP..."
                     kubectl get ingress skillsync-ingress -n skillsync
                 '''

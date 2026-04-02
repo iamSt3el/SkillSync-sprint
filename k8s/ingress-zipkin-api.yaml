@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zipkin-api-ingress
+  namespace: skillsync
+  annotations:
+    # Zipkin's REST API lives at /api/v2/* (no prefix).
+    # But the UI JavaScript runs from base /zipkin/, so the browser sends
+    # calls to /zipkin/api/v2/*. This ingress rewrites those back to /api/v2/*
+    # before forwarding to Zipkin.
+    #
+    # Path /zipkin/api(/|$)(.*) = 22 chars > tools-ingress /zipkin(/|$)(.*) = 16 chars,
+    # so nginx sorts this location block first and it wins for /zipkin/api/* requests.
+    nginx.ingress.kubernetes.io/rewrite-target: /api/$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /zipkin/api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: zipkin
+                port:
+                  number: 9411

@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import org.springframework.dao.DataIntegrityViolationException;
+
 import com.skillsync.notification_service.client.UserServiceClient;
 import com.skillsync.notification_service.dto.Mapper;
 import com.skillsync.notification_service.dto.NotificationResponseDTO;
@@ -28,13 +30,22 @@ public class NotificationService {
     private final Mapper mapper;
     private final UserServiceClient userServiceClient;
 
-    public void createNotification(Long userId, NotificationType type, String message) {
-        // Save notification to DB
+    public void createNotification(Long userId, NotificationType type, String message, String eventId) {
+        if (notificationRepository.existsByEventId(eventId)) {
+            log.debug("Skipping duplicate notification eventId={}", eventId);
+            return;
+        }
         Notification notification = new Notification();
+        notification.setEventId(eventId);
         notification.setUserId(userId);
         notification.setType(type);
         notification.setMessage(message);
-        notificationRepository.save(notification);
+        try {
+            notificationRepository.save(notification);
+        } catch (DataIntegrityViolationException e) {
+            log.debug("Duplicate notification suppressed by DB constraint eventId={}", eventId);
+            return;
+        }
 
         String userEmail = userServiceClient.getUserEmail(userId);
         try {

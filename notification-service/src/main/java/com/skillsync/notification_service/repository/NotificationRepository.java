@@ -8,4 +8,5 @@ import com.skillsync.notification_service.entity.Notification;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long>{
 	public List<Notification> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+	boolean existsByEventId(String eventId);
 }

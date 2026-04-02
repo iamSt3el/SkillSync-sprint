@@ -5,7 +5,6 @@ metadata:
   namespace: skillsync
 spec:
   replicas: 1
-  # Recreate avoids running two SonarQube/Elasticsearch instances at once
   strategy:
     type: Recreate
   selector:
@@ -17,23 +16,30 @@ spec:
         app: sonarqube
     spec:
       initContainers:
-        # Elasticsearch (bundled inside SonarQube) requires vm.max_map_count >= 524288.
-        # GKE nodes default to 65530, so we raise it here before SonarQube starts.
+        # Elasticsearch (bundled in SonarQube) requires vm.max_map_count >= 524288.
         - name: init-sysctl
           image: busybox
           command: ['sh', '-c', 'sysctl -w vm.max_map_count=524288 && sysctl -w fs.file-max=131072']
           securityContext:
             privileged: true
+        # Wait for PostgreSQL to accept connections before starting SonarQube.
+        - name: wait-for-postgres
+          image: busybox
+          command: ['sh', '-c', 'until nc -z sonar-postgres 5432; do echo waiting for postgres; sleep 3; done']
       containers:
         - name: sonarqube
-          # 9.9 LTS — last version with the embedded H2 database (evaluation/demo use).
-          # For production, switch to PostgreSQL and use sonarqube:community.
-          image: sonarqube:9.9-community
+          image: sonarqube:lts-community
           ports:
             - containerPort: 9000
           env:
             - name: SONAR_WEB_CONTEXT
               value: "/sonarqube"
+            - name: SONAR_JDBC_URL
+              value: "jdbc:postgresql://sonar-postgres:5432/sonarqube"
+            - name: SONAR_JDBC_USERNAME
+              value: "sonar"
+            - name: SONAR_JDBC_PASSWORD
+              value: "sonar"
             - name: SONAR_CE_JAVAOPTS
               value: "-Xmx512m -Xms128m"
             - name: SONAR_WEB_JAVAOPTS

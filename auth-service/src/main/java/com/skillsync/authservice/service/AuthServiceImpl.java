@@ -2,6 +2,7 @@ package com.skillsync.authservice.service;
 
 import java.util.List;
 
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
 		user.setPassword(passwordEncoder.encode(request.password()));
 		try {
 			user = userRepository.save(user);
-		} catch (DataIntegrityViolationException e) {
+		} catch (DataIntegrityViolationException | CannotAcquireLockException e) {
 			throw new UserAlreadyExistsException(request.email());
 		}
 
