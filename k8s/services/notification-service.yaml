@@ -45,6 +45,8 @@ spec:
                 secretKeyRef:
                   name: skillsync-secrets
                   key: RESEND_API_KEY
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx384m"
           resources:
             requests:
               cpu: "250m"
@@ -56,7 +58,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8088
-            initialDelaySeconds: 45
+            initialDelaySeconds: 120
             periodSeconds: 10
             failureThreshold: 10
           livenessProbe:
