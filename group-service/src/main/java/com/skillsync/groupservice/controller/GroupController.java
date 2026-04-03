@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -51,5 +52,10 @@ public class GroupController {
 	public ResponseEntity<String> leaveGroup(@PathVariable Long id, @RequestBody @Valid GroupMemberRequestDTO dto){
 		groupMemberService.leaveGroup(dto, id);
 		return ResponseEntity.ok("Successfully left the group");
+	}
+	
+	@GetMapping("/joined")
+	public ResponseEntity<List<GroupResponseDTO>> getJoinedGroups(@RequestHeader(value = "X-User-Id") Long userId){
+		return ResponseEntity.ok(groupService.getGroupsByUserId(userId));
 	}
 }

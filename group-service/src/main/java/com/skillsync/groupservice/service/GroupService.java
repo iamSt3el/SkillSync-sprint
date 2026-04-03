@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.skillsync.groupservice.dto.GroupMapper;
+import com.skillsync.groupservice.dto.GroupMemberResponseDTO;
 import com.skillsync.groupservice.dto.GroupRequestDTO;
 import com.skillsync.groupservice.dto.GroupResponseDTO;
 import com.skillsync.groupservice.entity.Group;
@@ -50,5 +51,10 @@ public class GroupService {
 		group.setActive(false);
 		groupRepository.save(group);
 		log.info("Group deactivated: id={}", id);
+	}
+	
+	public List<GroupResponseDTO> getGroupsByUserId(Long userId){
+		return groupRepository.findByMembersUserId(userId).stream()
+				.map(groupMapper::toResponseDto).toList();
 	}
 }
