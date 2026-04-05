@@ -28,6 +28,8 @@ public class EmailService {
     public void sendPasswordResetEmail(String toEmail, String resetToken) {
         String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
 
+        // Use placeholder replacement instead of .formatted() to avoid
+        // Java treating CSS "%" characters (e.g. "0%", "100%") as format specifiers.
         String html = """
             <div style="font-family: Roboto, Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
               <div style="background: linear-gradient(135deg, #0d1b2a 0%, #1a2d42 100%); padding: 32px 40px; text-align: center;">
@@ -41,21 +43,21 @@ public class EmailService {
                   We received a request to reset the password for your SkillSync account.
                   Click the button below to choose a new password. This link is valid for <strong>15 minutes</strong>.
                 </p>
-                <a href="%s"
+                <a href="{{RESET_LINK}}"
                    style="display: inline-block; background: #DD0031; color: #ffffff; text-decoration: none;
                           padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 1rem;">
                   Reset Password
                 </a>
                 <p style="color: #94a3b8; font-size: 0.85rem; margin: 28px 0 0; line-height: 1.5;">
                   If you didn't request this, you can safely ignore this email — your password won't change.<br>
-                  Or copy this link: <span style="color: #DD0031;">%s</span>
+                  Or copy this link: <span style="color: #DD0031;">{{RESET_LINK}}</span>
                 </p>
               </div>
               <div style="background: #f8fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #f1f5f9;">
                 <p style="color: #cbd5e1; font-size: 0.8rem; margin: 0;">© 2026 SkillSync. Empowering careers worldwide.</p>
               </div>
             </div>
-            """.formatted(resetLink, resetLink);
+            """.replace("{{RESET_LINK}}", resetLink);
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
