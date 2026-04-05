@@ -1,23 +1,30 @@
 package com.skillsync.authservice.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.skillsync.authservice.dto.request.ForgotPasswordRequest;
 import com.skillsync.authservice.dto.request.LoginRequest;
 import com.skillsync.authservice.dto.request.RegisterRequest;
+import com.skillsync.authservice.dto.request.ResetPasswordRequest;
 import com.skillsync.authservice.dto.response.AuthResponse;
+import com.skillsync.authservice.entity.PasswordResetToken;
 import com.skillsync.authservice.entity.Role;
 import com.skillsync.authservice.entity.User;
 import com.skillsync.authservice.entity.UserRole;
 import com.skillsync.authservice.event.UserEventProducer;
 import com.skillsync.authservice.event.UserRegisteredEvent;
 import com.skillsync.authservice.exception.InvalidCredentialsException;
+import com.skillsync.authservice.exception.InvalidResetTokenException;
 import com.skillsync.authservice.exception.InvalidTokenException;
 import com.skillsync.authservice.exception.UserAlreadyExistsException;
+import com.skillsync.authservice.repository.PasswordResetTokenRepository;
 import com.skillsync.authservice.repository.RoleRepository;
 import com.skillsync.authservice.repository.UserRepository;
 import com.skillsync.authservice.security.JwtUtil;
@@ -33,14 +40,19 @@ public class AuthServiceImpl implements AuthService {
 	private final PasswordEncoder passwordEncoder;
 	private final UserEventProducer userEventProducer;
 	private final JwtUtil jwtUtil;
+	private final PasswordResetTokenRepository resetTokenRepository;
+	private final EmailService emailService;
 
 	public AuthServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
-			PasswordEncoder passwordEncoder,UserEventProducer  userEventProducer,JwtUtil jwtUtil) {
+			PasswordEncoder passwordEncoder, UserEventProducer userEventProducer, JwtUtil jwtUtil,
+			PasswordResetTokenRepository resetTokenRepository, EmailService emailService) {
 		this.roleRepository = roleRepository;
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.userEventProducer = userEventProducer;
 		this.jwtUtil = jwtUtil;
+		this.resetTokenRepository = resetTokenRepository;
+		this.emailService = emailService;
 	}
 
 	@Override
@@ -77,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
 
 		UserRegisteredEvent event = new UserRegisteredEvent(user.getId(), user.getUsername(), user.getEmail(),
 				user.getPassword(), roles.get(0));
-		
+
 		userEventProducer.publishUserRegistered(event);
 
 		return new AuthResponse(token);
@@ -89,7 +101,7 @@ public class AuthServiceImpl implements AuthService {
 		User user = userRepository.findByEmail(request.email()).orElseThrow(InvalidCredentialsException::new);
 
 		if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-			throw new InvalidCredentialsException(); // ← was RuntimeException
+			throw new InvalidCredentialsException();
 		}
 
 		List<String> roles = user.getUserRoles().stream().map(ur -> ur.getRole().getName())
@@ -119,5 +131,42 @@ public class AuthServiceImpl implements AuthService {
 		log.info("Token refreshed for: {}", email);
 
 		return new AuthResponse(newToken);
+	}
+
+	@Override
+	public void forgotPassword(ForgotPasswordRequest request) {
+		// Always return success to avoid email enumeration attacks
+		userRepository.findByEmail(request.email()).ifPresent(user -> {
+			// Invalidate any existing tokens for this user
+			resetTokenRepository.deleteAllByUser(user);
+
+			String rawToken = UUID.randomUUID().toString();
+			LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(15);
+
+			PasswordResetToken resetToken = new PasswordResetToken(rawToken, user, expiresAt);
+			resetTokenRepository.save(resetToken);
+
+			emailService.sendPasswordResetEmail(user.getEmail(), rawToken);
+			log.info("Password reset token created for user: {}", user.getEmail());
+		});
+	}
+
+	@Override
+	public void resetPassword(ResetPasswordRequest request) {
+		PasswordResetToken resetToken = resetTokenRepository.findByToken(request.token())
+				.orElseThrow(InvalidResetTokenException::new);
+
+		if (resetToken.isUsed() || resetToken.isExpired()) {
+			throw new InvalidResetTokenException();
+		}
+
+		User user = resetToken.getUser();
+		user.setPassword(passwordEncoder.encode(request.newPassword()));
+		userRepository.save(user);
+
+		resetToken.setUsed(true);
+		resetTokenRepository.save(resetToken);
+
+		log.info("Password reset successfully for user: {}", user.getEmail());
 	}
 }

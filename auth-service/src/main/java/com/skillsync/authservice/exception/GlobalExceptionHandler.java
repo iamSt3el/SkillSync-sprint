@@ -45,6 +45,13 @@ public class GlobalExceptionHandler {
 		return buildResponse(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", e.getMessage(), request);
 	}
 
+	@ExceptionHandler(InvalidResetTokenException.class)
+	public ResponseEntity<ErrorResponseDTO> handleInvalidResetToken(InvalidResetTokenException e,
+			HttpServletRequest request) {
+		log.error("Invalid reset token: {}", e.getMessage());
+		return buildResponse(HttpStatus.BAD_REQUEST, "INVALID_RESET_TOKEN", e.getMessage(), request);
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponseDTO> handleValidation(MethodArgumentNotValidException e,
 			HttpServletRequest request) {
