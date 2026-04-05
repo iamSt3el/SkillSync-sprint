@@ -108,6 +108,14 @@ public class MentorService {
         return buildMentorResponse(saved);
     }
 
+    @Transactional
+    public MentorResponse rejectMentor(Long id) {
+        Mentor mentor = mentorRepository.findById(id)
+                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
+        mentor.setStatus(MentorStatus.REJECTED);
+        return buildMentorResponse(mentorRepository.save(mentor));
+    }
+
     @Transactional(readOnly = true)
     public List<MentorResponse> getAllMentors() {
         return mentorRepository.findAll()

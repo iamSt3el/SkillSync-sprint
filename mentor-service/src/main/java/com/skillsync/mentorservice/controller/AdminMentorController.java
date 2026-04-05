@@ -29,6 +29,12 @@ public class AdminMentorController {
         return ResponseEntity.ok(mentorService.approveMentor(id));
     }
 
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<MentorResponse> rejectMentor(@PathVariable Long id) {
+        log.info("PUT /admin/mentors/{}/reject", id);
+        return ResponseEntity.ok(mentorService.rejectMentor(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteMentor(@PathVariable Long id) {
         log.info("DELETE /admin/mentors/{}", id);
