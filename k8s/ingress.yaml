@@ -7,10 +7,16 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - skillsync.mooo.com
+      secretName: skillsync-tls
   rules:
-    - http:
+    - host: skillsync.mooo.com
+      http:
         paths:
           # API Gateway — all app traffic
           - path: /api(/|$)(.*)
@@ -38,5 +44,3 @@ spec:
                 name: rabbitmq
                 port:
                   number: 15672
-
-          # Zipkin, Grafana, Prometheus are in ingress-tools.yaml (no rewrite, they handle their own prefix)

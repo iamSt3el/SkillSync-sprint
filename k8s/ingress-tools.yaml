@@ -4,19 +4,13 @@ metadata:
   name: skillsync-tools-ingress
   namespace: skillsync
   annotations:
-    # No rewrite-target here — Zipkin uses context-path=/zipkin, Prometheus uses
-    # route-prefix=/prometheus, and Grafana uses serve_from_sub_path=true.
-    # They all expect to receive the full /tool/* path, not a stripped one.
-    #
-    # proxy-redirect rewrites Location headers from Grafana (and others) that
-    # incorrectly use http://localhost/ — turns them into relative paths so the
-    # browser follows them back through the nginx IP correctly.
     nginx.ingress.kubernetes.io/proxy-redirect-from: "http://localhost/"
     nginx.ingress.kubernetes.io/proxy-redirect-to: "/"
 spec:
   ingressClassName: nginx
   rules:
-    - http:
+    - host: skillsync.mooo.com
+      http:
         paths:
           - path: /zipkin(/|$)(.*)
             pathType: ImplementationSpecific

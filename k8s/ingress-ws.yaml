@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skillsync-ws-ingress
+  namespace: skillsync
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/rewrite-target: /ws$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: skillsync.mooo.com
+      http:
+        paths:
+          # WebSocket for real-time notifications — bypasses api-gateway (MVC can't proxy WS)
+          - path: /notifications/ws(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 8088

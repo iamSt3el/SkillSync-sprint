@@ -8,7 +8,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
+    - host: skillsync.mooo.com
+      http:
         paths:
           - path: /eureka
             pathType: Exact
