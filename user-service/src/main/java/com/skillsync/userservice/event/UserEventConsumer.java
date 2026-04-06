@@ -28,7 +28,8 @@ public class UserEventConsumer {
 				event.getUserName(),
 				event.getEmail(),
 				event.getPassword(),
-				event.getRole()
+				event.getRole(),
+				event.getProfilePictureUrl()
 				);
 		user.setId(event.getUserId());
 		userService.createUser(user);

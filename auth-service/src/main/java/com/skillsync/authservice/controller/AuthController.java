@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skillsync.authservice.dto.request.ForgotPasswordRequest;
+import com.skillsync.authservice.dto.request.GoogleLoginRequest;
 import com.skillsync.authservice.dto.request.LoginRequest;
 import com.skillsync.authservice.dto.request.RegisterRequest;
 import com.skillsync.authservice.dto.request.ResetPasswordRequest;
@@ -59,5 +60,11 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(@RequestBody GoogleLoginRequest request) {
+        AuthResponse response = authService.loginWithGoogle(request);
+        return ResponseEntity.ok(response);
     }
 }

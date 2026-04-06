@@ -57,6 +57,11 @@ spec:
                   key: SMTP_PASSWORD
             - name: FRONTEND_URL
               value: "http://localhost:4200"
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: skillsync-secrets
+                  key: GOOGLE_CLIENT_ID
             - name: JAVA_OPTS
               value: "-Xms128m -Xmx384m"
           resources:

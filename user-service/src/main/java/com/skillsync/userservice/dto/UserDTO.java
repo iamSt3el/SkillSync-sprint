@@ -12,6 +12,7 @@ public class UserDTO {
     private String email;
     private String role;
     private LocalDateTime createdAt;
+    private String profilePictureUrl;
 
     public UserDTO() {}
 
@@ -22,6 +23,7 @@ public class UserDTO {
         this.email = user.getEmail();
         this.role = user.getRole();
         this.createdAt = user.getCreatedAt();
+        this.profilePictureUrl = user.getProfilePictureUrl();
     }
 
     
@@ -71,6 +73,14 @@ public class UserDTO {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
+    }
+
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
     }
 
     @Override

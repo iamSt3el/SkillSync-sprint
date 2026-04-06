@@ -25,11 +25,10 @@ public class PaymentEventConsumer {
         log.info("Received payment.success for sessionId={}", event.getSessionId());
         sessionRepository.findById(event.getSessionId()).ifPresentOrElse(
             session -> {
-                if (session.getStatus() == SessionStatus.REQUESTED) {
-                    session.setStatus(SessionStatus.ACCEPTED);
+                if (session.getStatus() == SessionStatus.PENDING_PAYMENT) {
+                    session.setStatus(SessionStatus.REQUESTED);
                     sessionRepository.save(session);
-                    publishSessionAccepted(session);
-                    log.info("Session {} moved to ACCEPTED after payment", session.getId());
+                    log.info("Session {} moved to REQUESTED after payment — awaiting mentor acceptance", session.getId());
                 }
             },
             () -> log.warn("Session not found for payment.success event: {}", event.getSessionId())
@@ -42,7 +41,7 @@ public class PaymentEventConsumer {
         log.info("Received payment.failed for sessionId={}", event.getSessionId());
         sessionRepository.findById(event.getSessionId()).ifPresentOrElse(
             session -> {
-                if (session.getStatus() == SessionStatus.REQUESTED) {
+                if (session.getStatus() == SessionStatus.PENDING_PAYMENT) {
                     session.setStatus(SessionStatus.CANCELLED);
                     sessionRepository.save(session);
                     publishSessionCancelled(session);

@@ -15,7 +15,7 @@ public class SessionMapper {
                 .learnerId(learnerId)
                 .sessionDate(request.getSessionDate())
                 .topic(request.getTopic())
-                .status(SessionStatus.REQUESTED)
+                .status(SessionStatus.PENDING_PAYMENT)
                 .build();
     }
 

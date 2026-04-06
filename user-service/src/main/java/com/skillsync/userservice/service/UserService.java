@@ -62,6 +62,15 @@ public class UserService {
         return new UserDTO(savedUser);
     }
 
+    public UserDTO updateProfilePicture(Long id, String pictureUrl) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
+        user.setProfilePictureUrl(pictureUrl);
+        User savedUser = userRepository.save(user);
+        log.info("Profile picture updated: id={}", id);
+        return new UserDTO(savedUser);
+    }
+
     public boolean deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND);

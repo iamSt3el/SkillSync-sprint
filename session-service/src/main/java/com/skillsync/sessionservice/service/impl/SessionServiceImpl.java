@@ -96,6 +96,11 @@ public class SessionServiceImpl implements SessionService {
             session.getStatus() == SessionStatus.CANCELLED) {
             throw new InvalidSessionStateException("Cannot cancel a completed or already cancelled session");
         }
+        // PENDING_PAYMENT sessions can only be cancelled by the learner
+        if (session.getStatus() == SessionStatus.PENDING_PAYMENT &&
+            !session.getLearnerId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the learner can cancel a pending payment session");
+        }
 
         session.setStatus(SessionStatus.CANCELLED);
         Session updated = sessionRepository.save(session);
