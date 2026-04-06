@@ -1,4 +1,4 @@
-package com.skillsync.notification_service.dto;
+package com.skillsync.groupservice.dto;
 
 import java.time.LocalDateTime;
 
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorResponse {
+public class ErrorResponseDTO {
     private int status;
     private String error;
     private String message;

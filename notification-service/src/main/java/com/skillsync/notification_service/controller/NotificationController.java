@@ -26,9 +26,8 @@ public class NotificationController {
 	}
 	
 	@PutMapping("/{id}/read")
-	public ResponseEntity<String> updateRead(@PathVariable Long id){
+	public ResponseEntity<Void> updateRead(@PathVariable Long id){
 		notificationService.markAsRead(id);
-		return ResponseEntity.ok("Successfully changed the read state");
-
+		return ResponseEntity.noContent().build();
 	}
 }

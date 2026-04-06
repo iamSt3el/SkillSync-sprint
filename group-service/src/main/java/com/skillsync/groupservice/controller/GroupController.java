@@ -49,9 +49,9 @@ public class GroupController {
 	}
 	
 	@PostMapping("/{id}/leave")
-	public ResponseEntity<String> leaveGroup(@PathVariable Long id, @RequestBody @Valid GroupMemberRequestDTO dto){
+	public ResponseEntity<Void> leaveGroup(@PathVariable Long id, @RequestBody @Valid GroupMemberRequestDTO dto){
 		groupMemberService.leaveGroup(dto, id);
-		return ResponseEntity.ok("Successfully left the group");
+		return ResponseEntity.noContent().build();
 	}
 	
 	@GetMapping("/joined")

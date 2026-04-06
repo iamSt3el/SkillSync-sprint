@@ -27,14 +27,14 @@ public class AdminGroupController {
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<String> deleteGroup(@PathVariable Long id) {
+	public ResponseEntity<Void> deleteGroup(@PathVariable Long id) {
 		groupService.deleteGroup(id);
-		return ResponseEntity.ok("Group deleted successfully");
+		return ResponseEntity.noContent().build();
 	}
 
 	@PutMapping("/{id}/deactivate")
-	public ResponseEntity<String> deactivateGroup(@PathVariable Long id) {
+	public ResponseEntity<Void> deactivateGroup(@PathVariable Long id) {
 		groupService.deactivateGroup(id);
-		return ResponseEntity.ok("Group deactivated successfully");
+		return ResponseEntity.noContent().build();
 	}
 }
