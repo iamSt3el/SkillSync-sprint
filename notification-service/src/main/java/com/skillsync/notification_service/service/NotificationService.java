@@ -16,6 +16,7 @@ import com.skillsync.notification_service.entity.NotificationType;
 import com.skillsync.notification_service.exception.EmailSendException;
 import com.skillsync.notification_service.exception.NotificationNotFoundException;
 import com.skillsync.notification_service.repository.NotificationRepository;
+import com.skillsync.notification_service.websocket.NotificationWebSocketHandler;
 
 import lombok.AllArgsConstructor;
 
@@ -29,6 +30,7 @@ public class NotificationService {
     private final EmailService emailService;
     private final Mapper mapper;
     private final UserServiceClient userServiceClient;
+    private final NotificationWebSocketHandler webSocketHandler;
 
     public void createNotification(Long userId, NotificationType type, String message, String eventId) {
         if (notificationRepository.existsByEventId(eventId)) {
@@ -40,12 +42,16 @@ public class NotificationService {
         notification.setUserId(userId);
         notification.setType(type);
         notification.setMessage(message);
+        Notification saved;
         try {
-            notificationRepository.save(notification);
+            saved = notificationRepository.save(notification);
         } catch (DataIntegrityViolationException e) {
             log.debug("Duplicate notification suppressed by DB constraint eventId={}", eventId);
             return;
         }
+
+        // Push real-time via WebSocket if user is connected
+        webSocketHandler.sendNotification(userId, mapper.toResponseDto(saved));
 
         String userEmail = userServiceClient.getUserEmail(userId);
         try {
