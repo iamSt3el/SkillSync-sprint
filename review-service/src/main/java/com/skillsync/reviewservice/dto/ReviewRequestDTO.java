@@ -1,6 +1,7 @@
 package com.skillsync.reviewservice.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +17,9 @@ public class ReviewRequestDTO {
 	@NotNull(message = "User id should not be null")
 	private Long userId;
 	
-	@NotBlank(message = "Rating should not be blank")
+	@NotNull(message = "Rating should not be null")
+	@DecimalMin(value = "1.0", message = "Rating must be at least 1")
+	@DecimalMax(value = "5.0", message = "Rating must be at most 5")
 	private Double rating;
 	
 	private String comment;
