@@ -13,7 +13,7 @@ import com.skillsync.reviewservice.dto.ReviewRequestDTO;
 import com.skillsync.reviewservice.dto.ReviewResponseDTO;
 import com.skillsync.reviewservice.service.ReviewService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
