@@ -2,11 +2,12 @@ package com.skillsync.userservice.controller.admin;
 
 import com.skillsync.userservice.dto.UserDTO;
 import com.skillsync.userservice.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/admin/users")
@@ -21,9 +22,11 @@ public class AdminUserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        List<UserDTO> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<Page<UserDTO>> getAllUsers(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(userService.getAllUsers(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))));
     }
 
     @DeleteMapping("/{id}")

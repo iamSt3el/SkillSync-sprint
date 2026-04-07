@@ -16,6 +16,8 @@ import com.skillsync.mentorservice.feign.UserServiceClient;
 import com.skillsync.mentorservice.repository.MentorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,6 +88,12 @@ public class MentorService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Page<MentorResponse> getAllActiveMentorsPaged(Pageable pageable) {
+        return mentorRepository.findByStatus(MentorStatus.ACTIVE, pageable)
+                .map(this::buildMentorResponse);
+    }
+
     @Transactional
     public MentorResponse updateAvailability(Long id, AvailabilityRequest request, Long userId) {
         Mentor mentor = mentorRepository.findById(id)
@@ -122,6 +130,12 @@ public class MentorService {
                 .stream()
                 .map(this::buildMentorResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MentorResponse> getAllMentorsPaged(Pageable pageable) {
+        return mentorRepository.findAll(pageable)
+                .map(this::buildMentorResponse);
     }
 
     @Transactional

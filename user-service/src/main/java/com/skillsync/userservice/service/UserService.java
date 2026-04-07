@@ -5,6 +5,8 @@ import com.skillsync.userservice.entity.User;
 import com.skillsync.userservice.exception.UserNotFoundException;
 import com.skillsync.userservice.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,6 +29,10 @@ public class UserService {
         return userRepository.findAll().stream()
                 .map(UserDTO::new)
                 .toList();
+    }
+
+    public Page<UserDTO> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(UserDTO::new);
     }
     
     public List<UserDTO> getUsersByIds(List<Long> ids) {

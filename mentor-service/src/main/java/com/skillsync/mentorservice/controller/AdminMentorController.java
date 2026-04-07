@@ -4,10 +4,11 @@ import com.skillsync.mentorservice.dto.response.MentorResponse;
 import com.skillsync.mentorservice.service.MentorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -18,9 +19,12 @@ public class AdminMentorController {
     private final MentorService mentorService;
 
     @GetMapping
-    public ResponseEntity<List<MentorResponse>> getAllMentors() {
-        log.info("GET /admin/mentors");
-        return ResponseEntity.ok(mentorService.getAllMentors());
+    public ResponseEntity<Page<MentorResponse>> getAllMentors(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "15") int size) {
+        log.info("GET /admin/mentors?page={}&size={}", page, size);
+        return ResponseEntity.ok(mentorService.getAllMentorsPaged(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))));
     }
 
     @PutMapping("/{id}/approve")
