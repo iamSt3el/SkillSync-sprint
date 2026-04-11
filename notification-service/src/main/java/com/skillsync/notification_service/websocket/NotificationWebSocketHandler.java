@@ -2,7 +2,7 @@ package com.skillsync.notification_service.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.skillsync.notification_service.dto.NotificationResponseDTO;
+import com.skillsync.notification_service.dto.response.NotificationResponseDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

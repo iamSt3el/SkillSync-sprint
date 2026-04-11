@@ -1,4 +1,4 @@
-package com.skillsync.groupservice.dto;
+package com.skillsync.groupservice.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,12 +14,13 @@ import lombok.Setter;
 @Getter
 @Builder
 public class GroupRequestDTO {
-	@NotBlank(message = "Group name is required")
-	private String name;
-	
-	@NotBlank(message = "Group description is required")
-	private String description;
-	
-	@NotNull(message = "Creator User id is required")
-	private Long createdBy;
+
+    @NotBlank(message = "Group name is required")
+    private String name;
+
+    @NotBlank(message = "Group description is required")
+    private String description;
+
+    @NotNull(message = "Creator User id is required")
+    private Long createdBy;
 }

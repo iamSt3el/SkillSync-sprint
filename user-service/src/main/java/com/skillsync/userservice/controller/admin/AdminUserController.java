@@ -1,6 +1,7 @@
 package com.skillsync.userservice.controller.admin;
 
-import com.skillsync.userservice.dto.UserDTO;
+import com.skillsync.userservice.dto.response.UserDTO;
+import com.skillsync.userservice.dto.response.UserStatsDTO;
 import com.skillsync.userservice.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,11 @@ public class AdminUserController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(userService.getAllUsers(
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<UserStatsDTO> getUserStats() {
+        return ResponseEntity.ok(userService.getUserStats());
     }
 
     @DeleteMapping("/{id}")

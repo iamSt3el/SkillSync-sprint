@@ -1,4 +1,4 @@
-package com.skillsync.groupservice.dto;
+package com.skillsync.groupservice.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @Getter
 @Builder
 public class GroupMemberRequestDTO {
-	
-	@NotNull(message = "User id id required")
-	private Long userId;
+
+    @NotNull(message = "User id is required")
+    private Long userId;
 }

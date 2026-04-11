@@ -1,60 +1,21 @@
 package com.skillsync.groupservice.service;
 
+import com.skillsync.groupservice.dto.request.GroupRequestDTO;
+import com.skillsync.groupservice.dto.response.GroupResponseDTO;
+
 import java.util.List;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+public interface GroupService {
 
-import com.skillsync.groupservice.dto.GroupMapper;
-import com.skillsync.groupservice.dto.GroupMemberResponseDTO;
-import com.skillsync.groupservice.dto.GroupRequestDTO;
-import com.skillsync.groupservice.dto.GroupResponseDTO;
-import com.skillsync.groupservice.entity.Group;
-import com.skillsync.groupservice.exception.GroupNotFoundException;
-import com.skillsync.groupservice.repository.GroupRepository;
+    GroupResponseDTO createGroup(GroupRequestDTO dto);
 
-@Slf4j
-@Service
-public class GroupService {
-	private final GroupRepository groupRepository;
-	private final GroupMapper groupMapper;
+    List<GroupResponseDTO> getAllGroups();
 
-	public GroupService(GroupRepository groupRepository, GroupMapper groupMapper) {
-		this.groupRepository = groupRepository;
-		this.groupMapper = groupMapper;
-	}
+    GroupResponseDTO getGroupById(Long id);
 
-	public GroupResponseDTO createGroup(GroupRequestDTO dto) {
-		Group group = groupMapper.toEntity(dto);
-		Group saved = groupRepository.save(group);
-		log.info("Group created: id={}", saved.getId());
-		return groupMapper.toResponseDto(saved);
-	}
+    void deleteGroup(Long id);
 
-	public List<GroupResponseDTO> getAllGroups() {
-		return groupRepository.findAll().stream().map(groupMapper::toResponseDto).toList();
-	}
+    void deactivateGroup(Long id);
 
-	public GroupResponseDTO getGroupById(Long id) {
-		Group group = groupRepository.findById(id).orElseThrow(() -> new GroupNotFoundException(id));
-		return groupMapper.toResponseDto(group);
-	}
-
-	public void deleteGroup(Long id) {
-		Group group = groupRepository.findById(id).orElseThrow(() -> new GroupNotFoundException(id));
-		groupRepository.delete(group);
-		log.info("Group deleted: id={}", id);
-	}
-
-	public void deactivateGroup(Long id) {
-		Group group = groupRepository.findById(id).orElseThrow(() -> new GroupNotFoundException(id));
-		group.setActive(false);
-		groupRepository.save(group);
-		log.info("Group deactivated: id={}", id);
-	}
-	
-	public List<GroupResponseDTO> getGroupsByUserId(Long userId){
-		return groupRepository.findByMembersUserId(userId).stream()
-				.map(groupMapper::toResponseDto).toList();
-	}
+    List<GroupResponseDTO> getGroupsByUserId(Long userId);
 }

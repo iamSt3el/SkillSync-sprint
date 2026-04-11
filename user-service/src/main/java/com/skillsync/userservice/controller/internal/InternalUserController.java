@@ -1,7 +1,7 @@
 package com.skillsync.userservice.controller.internal;
 
-import com.skillsync.userservice.dto.UserDTO;
-import com.skillsync.userservice.dto.UserEmailDTO;
+import com.skillsync.userservice.dto.response.UserDTO;
+import com.skillsync.userservice.dto.response.UserEmailDTO;
 import com.skillsync.userservice.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

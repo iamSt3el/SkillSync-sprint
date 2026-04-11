@@ -1,11 +1,11 @@
-package com.skillsync.notification_service.dto;
+package com.skillsync.notification_service.dto.mapper;
 
+import com.skillsync.notification_service.dto.response.NotificationResponseDTO;
+import com.skillsync.notification_service.entity.Notification;
 import org.springframework.stereotype.Component;
 
-import com.skillsync.notification_service.entity.Notification;
-
 @Component
-public class Mapper {
+public class NotificationMapper {
 
     public NotificationResponseDTO toResponseDto(Notification notification) {
         return NotificationResponseDTO.builder()

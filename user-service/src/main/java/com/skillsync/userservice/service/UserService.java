@@ -1,106 +1,37 @@
 package com.skillsync.userservice.service;
 
-import com.skillsync.userservice.dto.UserDTO;
+import com.skillsync.userservice.dto.response.UserDTO;
+import com.skillsync.userservice.dto.response.UserStatsDTO;
 import com.skillsync.userservice.entity.User;
-import com.skillsync.userservice.exception.UserNotFoundException;
-import com.skillsync.userservice.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
-@Service
-public class UserService {
+public interface UserService {
 
-    private static final String USER_WITH_ID = "User with id ";
-    private static final String NOT_FOUND = " not found";
+    List<UserDTO> getAllUsers();
 
-    private final UserRepository userRepository;
+    Page<UserDTO> getAllUsers(Pageable pageable);
 
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    List<UserDTO> getUsersByIds(List<Long> ids);
 
-    public List<UserDTO> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(UserDTO::new)
-                .toList();
-    }
+    Optional<UserDTO> getUserById(Long id);
 
-    public Page<UserDTO> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable).map(UserDTO::new);
-    }
-    
-    public List<UserDTO> getUsersByIds(List<Long> ids) {
-        return userRepository.findByIdIn(ids)
-                .stream()
-                .map(UserDTO::new)
-                .toList();
-    }
+    Optional<UserDTO> getUserByEmail(String email);
 
-    public Optional<UserDTO> getUserById(Long id) {
-        return userRepository.findById(id).map(UserDTO::new);
-    }
+    UserDTO updateUser(Long id, UserDTO userDetails);
 
-    public Optional<UserDTO> getUserByEmail(String email) {
-        return userRepository.findByEmail(email).map(UserDTO::new);
-    }
+    UserDTO createUser(User user);
 
-    public UserDTO updateUser(Long id, UserDTO userDetails) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
+    UserDTO updateProfilePicture(Long id, String pictureUrl);
 
-        user.setName(userDetails.getName());
-        user.setEmail(userDetails.getEmail());
+    boolean deleteUser(Long id);
 
-        User savedUser = userRepository.save(user);
-        log.info("User updated: id={}", id);
-        return new UserDTO(savedUser);
-    }
+    UserDTO blockUser(Long id);
 
-    public UserDTO createUser(User user) {
-        User savedUser = userRepository.save(user);
-        log.info("User profile created: id={}", savedUser.getId());
-        return new UserDTO(savedUser);
-    }
+    UserDTO unblockUser(Long id);
 
-    public UserDTO updateProfilePicture(Long id, String pictureUrl) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
-        user.setProfilePictureUrl(pictureUrl);
-        User savedUser = userRepository.save(user);
-        log.info("Profile picture updated: id={}", id);
-        return new UserDTO(savedUser);
-    }
-
-    public boolean deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND);
-        }
-        userRepository.deleteById(id);
-        log.info("User deleted: id={}", id);
-        return true;
-    }
-
-    public UserDTO blockUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
-        user.setStatus(User.Status.BLOCKED);
-        User savedUser = userRepository.save(user);
-        log.warn("User blocked: id={}", id);
-        return new UserDTO(savedUser);
-    }
-
-    public UserDTO unblockUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
-        user.setStatus(User.Status.ACTIVE);
-        User savedUser = userRepository.save(user);
-        log.info("User unblocked: id={}", id);
-        return new UserDTO(savedUser);
-    }
+    UserStatsDTO getUserStats();
 }

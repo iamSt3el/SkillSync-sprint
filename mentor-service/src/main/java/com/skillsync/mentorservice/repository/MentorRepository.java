@@ -55,6 +55,17 @@ public interface MentorRepository extends JpaRepository<Mentor, Long> {
         Pageable pageable
     );
 
+    long countByStatus(MentorStatus status);
+
+    @Query("SELECT COALESCE(AVG(m.rating), 0.0) FROM Mentor m WHERE m.status = 'ACTIVE'")
+    Double avgRatingOfActive();
+
+    @Query("SELECT COALESCE(AVG(m.hourlyRate), 0.0) FROM Mentor m WHERE m.status = 'ACTIVE'")
+    Double avgHourlyRateOfActive();
+
+    @Query("SELECT COALESCE(SUM(m.reviewCount), 0) FROM Mentor m")
+    Long sumReviewCount();
+
     // Legacy non-paginated (still used by MentorDiscoveryService internal sort)
     @Query("""
         SELECT DISTINCT m FROM Mentor m

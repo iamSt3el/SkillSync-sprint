@@ -1,6 +1,6 @@
 package com.skillsync.userservice.controller;
 
-import com.skillsync.userservice.dto.UserDTO;
+import com.skillsync.userservice.dto.response.UserDTO;
 import com.skillsync.userservice.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

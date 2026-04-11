@@ -1,187 +1,39 @@
 package com.skillsync.mentorservice.service;
 
-import com.skillsync.mentorservice.config.RabbitMQConfig;
 import com.skillsync.mentorservice.dto.request.AvailabilityRequest;
 import com.skillsync.mentorservice.dto.request.MentorApplyRequest;
 import com.skillsync.mentorservice.dto.response.MentorResponse;
-import com.skillsync.mentorservice.dto.response.SkillResponse;
-import com.skillsync.mentorservice.dto.response.UserResponse;
-import com.skillsync.mentorservice.entity.Mentor;
-import com.skillsync.mentorservice.entity.MentorSkill;
-import com.skillsync.mentorservice.enums.MentorStatus;
-import com.skillsync.mentorservice.event.MentorApprovedEvent;
-import com.skillsync.mentorservice.exception.MentorNotFoundException;
-import com.skillsync.mentorservice.feign.SkillServiceClient;
-import com.skillsync.mentorservice.feign.UserServiceClient;
-import com.skillsync.mentorservice.repository.MentorRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.skillsync.mentorservice.dto.response.MentorStatsDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class MentorService {
+public interface MentorService {
 
-    private static final String MENTOR_NOT_FOUND = "Mentor not found with id: ";
+    MentorResponse applyAsMentor(MentorApplyRequest request, String email);
 
-    private final MentorRepository mentorRepository;
-    private final UserServiceClient userServiceClient;
-    private final SkillServiceClient skillServiceClient;
-    private final RabbitTemplate rabbitTemplate;
+    MentorResponse getMentorById(Long id);
 
-    @Transactional
-    public MentorResponse applyAsMentor(MentorApplyRequest request, String email) {
-        UserResponse user = userServiceClient.getUserByEmail(email);
-        Long userId = user.getId();
+    List<MentorResponse> getAllActiveMentors();
 
-        if (mentorRepository.existsByUserId(userId)) {
-            throw new IllegalStateException("User has already applied as a mentor");
-        }
+    Page<MentorResponse> getAllActiveMentorsPaged(Pageable pageable);
 
-        Mentor mentor = Mentor.builder()
-                .id(userId)
-                .userId(userId)
-                .bio(request.getBio())
-                .experience(request.getExperience())
-                .hourlyRate(request.getHourlyRate())
-                .status(MentorStatus.PENDING)
-                .rating(0.0)
-                .reviewCount(0)
-                .build();
+    MentorResponse updateAvailability(Long id, AvailabilityRequest request, Long userId);
 
-        if (request.getSkillIds() != null && !request.getSkillIds().isEmpty()) {
-            List<MentorSkill> mentorSkills = new ArrayList<>();
-            for (Long skillId : request.getSkillIds()) {
-                SkillResponse skill = skillServiceClient.getSkillbyId(skillId);
-                MentorSkill mentorSkill = MentorSkill.builder()
-                        .mentor(mentor)
-                        .skillId(skillId)
-                        .skillName(skill.getName())
-                        .build();
-                mentorSkills.add(mentorSkill);
-            }
-            mentor.getMentorSkills().addAll(mentorSkills);
-        }
+    MentorResponse approveMentor(Long id);
 
-        Mentor saved = mentorRepository.save(mentor);
-        return buildMentorResponse(saved);
-    }
+    MentorResponse rejectMentor(Long id);
 
-    @Transactional(readOnly = true)
-    public MentorResponse getMentorById(Long id) {
-        Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
-        return buildMentorResponse(mentor);
-    }
+    List<MentorResponse> getAllMentors();
 
-    @Transactional(readOnly = true)
-    public List<MentorResponse> getAllActiveMentors() {
-        return mentorRepository.findByStatus(MentorStatus.ACTIVE)
-                .stream()
-                .map(this::buildMentorResponse)
-                .toList();
-    }
+    Page<MentorResponse> getAllMentorsPaged(Pageable pageable);
 
-    @Transactional(readOnly = true)
-    public Page<MentorResponse> getAllActiveMentorsPaged(Pageable pageable) {
-        return mentorRepository.findByStatus(MentorStatus.ACTIVE, pageable)
-                .map(this::buildMentorResponse);
-    }
+    void deleteMentor(Long id);
 
-    @Transactional
-    public MentorResponse updateAvailability(Long id, AvailabilityRequest request, Long userId) {
-        Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
-        if (!mentor.getUserId().equals(userId)) {
-            throw new SecurityException("You can only update your own availability");
-        }
-        mentor.setAvailability(request.getSchedule());
-        return buildMentorResponse(mentorRepository.save(mentor));
-    }
+    boolean mentorExists(Long id);
 
-    @Transactional
-    public MentorResponse approveMentor(Long id) {
-        Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
-        mentor.setStatus(MentorStatus.ACTIVE);
-        Mentor saved = mentorRepository.save(mentor);
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.MENTOR_APPROVED_KEY,
-                new MentorApprovedEvent(saved.getUserId()));
-        return buildMentorResponse(saved);
-    }
+    void updateRating(Long mentorId, double newRating);
 
-    @Transactional
-    public MentorResponse rejectMentor(Long id) {
-        Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
-        mentor.setStatus(MentorStatus.REJECTED);
-        return buildMentorResponse(mentorRepository.save(mentor));
-    }
-
-    @Transactional(readOnly = true)
-    public List<MentorResponse> getAllMentors() {
-        return mentorRepository.findAll()
-                .stream()
-                .map(this::buildMentorResponse)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public Page<MentorResponse> getAllMentorsPaged(Pageable pageable) {
-        return mentorRepository.findAll(pageable)
-                .map(this::buildMentorResponse);
-    }
-
-    @Transactional
-    public void deleteMentor(Long id) {
-        Mentor mentor = mentorRepository.findById(id)
-                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
-        mentorRepository.delete(mentor);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean mentorExists(Long id) {
-        return mentorRepository.findById(id)
-                .filter(m -> m.getStatus() == MentorStatus.ACTIVE)
-                .isPresent();
-    }
-
-    @Transactional
-    public void updateRating(Long mentorId, double newRating) {
-        Mentor mentor = mentorRepository.findById(mentorId)
-                .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + mentorId));
-
-        int totalReviews = mentor.getReviewCount() + 1;
-        double updatedRating = ((mentor.getRating() * mentor.getReviewCount()) + newRating) / totalReviews;
-
-        mentor.setRating(Math.round(updatedRating * 10.0) / 10.0);
-        mentor.setReviewCount(totalReviews);
-        mentorRepository.save(mentor);
-    }
-
-    private MentorResponse buildMentorResponse(Mentor mentor) {
-        List<String> skillNames = mentor.getMentorSkills().stream()
-                .map(MentorSkill::getSkillName)
-                .filter(name -> name != null && !name.isBlank())
-                .toList();
-
-        return MentorResponse.builder()
-                .id(mentor.getId())
-                .userId(mentor.getUserId())
-                .bio(mentor.getBio())
-                .experience(mentor.getExperience())
-                .rating(mentor.getRating())
-                .reviewCount(mentor.getReviewCount())
-                .hourlyRate(mentor.getHourlyRate())
-                .status(mentor.getStatus().name())
-                .availability(mentor.getAvailability())
-                .skills(skillNames)
-                .build();
-    }
+    MentorStatsDTO getMentorStats();
 }
