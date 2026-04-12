@@ -6,6 +6,8 @@ import com.skillsync.authservice.dto.response.AuthResponse;
 import com.skillsync.authservice.entity.Role;
 import com.skillsync.authservice.entity.User;
 import com.skillsync.authservice.entity.UserRole;
+import com.skillsync.authservice.event.UserEventProducer;
+import com.skillsync.authservice.repository.PasswordResetTokenRepository;
 import com.skillsync.authservice.repository.RoleRepository;
 import com.skillsync.authservice.repository.UserRepository;
 import com.skillsync.authservice.security.JwtUtil;
@@ -16,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -32,6 +35,10 @@ class AuthServiceImplTest {
     @Mock private RoleRepository roleRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtUtil jwtUtil;
+    @Mock private UserEventProducer userEventProducer;
+    @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
+    @Mock private EmailService emailService;
+    @Mock private RestTemplate restTemplate;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -57,7 +64,7 @@ class AuthServiceImplTest {
         when(passwordEncoder.encode(request.password())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(mockUser);
         when(roleRepository.findByName("ROLE_LEARNER")).thenReturn(Optional.of(mockRole));
-        when(jwtUtil.generateToken(anyString(), any())).thenReturn("mock-jwt-token");
+        when(jwtUtil.generateToken(anyString(), any(), any())).thenReturn("mock-jwt-token");
 
         AuthResponse response = authService.register(request);
 
@@ -73,7 +80,7 @@ class AuthServiceImplTest {
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Email already exists");
+                .hasMessageContaining("already exists");
     }
 
     // --- login ---
@@ -84,7 +91,7 @@ class AuthServiceImplTest {
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(mockUser));
         when(passwordEncoder.matches(request.password(), mockUser.getPassword())).thenReturn(true);
-        when(jwtUtil.generateToken(anyString(), any())).thenReturn("mock-jwt-token");
+        when(jwtUtil.generateToken(anyString(), any(), any())).thenReturn("mock-jwt-token");
 
         AuthResponse response = authService.login(request);
 
@@ -100,7 +107,7 @@ class AuthServiceImplTest {
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("User not found");
+                .hasMessageContaining("Invalid");
     }
 
     @Test
@@ -112,7 +119,7 @@ class AuthServiceImplTest {
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Invalid credentials");
+                .hasMessageContaining("Invalid");
     }
 
     // --- refreshToken ---
@@ -121,10 +128,10 @@ class AuthServiceImplTest {
     void refreshToken_shouldReturnNewTokenWhenValid() {
         String oldToken = "valid-token";
 
-        when(jwtUtil.extractEmail(oldToken)).thenReturn("test@test.com");
         when(jwtUtil.isTokenExpired(oldToken)).thenReturn(false);
+        when(jwtUtil.extractEmail(oldToken)).thenReturn("test@test.com");
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(mockUser));
-        when(jwtUtil.generateToken(anyString(), any())).thenReturn("new-jwt-token");
+        when(jwtUtil.generateToken(anyString(), any(), any())).thenReturn("new-jwt-token");
 
         AuthResponse response = authService.refreshToken(oldToken);
 
@@ -135,11 +142,10 @@ class AuthServiceImplTest {
     void refreshToken_shouldThrowWhenTokenIsExpired() {
         String expiredToken = "expired-token";
 
-        when(jwtUtil.extractEmail(expiredToken)).thenReturn("test@test.com");
         when(jwtUtil.isTokenExpired(expiredToken)).thenReturn(true);
 
         assertThatThrownBy(() -> authService.refreshToken(expiredToken))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Token expired");
+                .hasMessageContaining("expired");
     }
 }

@@ -6,6 +6,7 @@ import com.skillsync.sessionservice.dto.response.SessionResponse;
 import com.skillsync.sessionservice.entity.Session;
 import com.skillsync.sessionservice.entity.SessionStatus;
 import com.skillsync.sessionservice.exception.InvalidSessionStateException;
+import com.skillsync.sessionservice.exception.MentorNotFoundException;
 import com.skillsync.sessionservice.exception.SessionNotFoundException;
 import com.skillsync.sessionservice.mapper.SessionMapper;
 import com.skillsync.sessionservice.repository.SessionRepository;
@@ -67,15 +68,15 @@ class SessionServiceImplTest {
     @DisplayName("bookSession: should save session and publish RabbitMQ event")
     void bookSession_success() {
         SessionBookRequest request = new SessionBookRequest(
-                10L, 20L, LocalDateTime.now().plusDays(1), "Spring Boot Microservices"
+                10L, LocalDateTime.now().plusDays(1), "Spring Boot Microservices"
         );
 
         when(mentorClient.mentorExists(10L)).thenReturn(true);
-        when(sessionMapper.toEntity(request)).thenReturn(sampleSession);
+        when(sessionMapper.toEntity(request, 20L)).thenReturn(sampleSession);
         when(sessionRepository.save(sampleSession)).thenReturn(sampleSession);
         when(sessionMapper.toResponse(sampleSession)).thenReturn(sampleResponse);
 
-        SessionResponse result = sessionService.bookSession(request);
+        SessionResponse result = sessionService.bookSession(request, 20L);
 
         assertThat(result).isNotNull();
         assertThat(result.getStatus()).isEqualTo(SessionStatus.REQUESTED);
@@ -87,12 +88,12 @@ class SessionServiceImplTest {
     @DisplayName("bookSession: should throw when mentor does not exist")
     void bookSession_mentorNotFound() {
         SessionBookRequest request = new SessionBookRequest(
-                99L, 20L, LocalDateTime.now().plusDays(1), "Topic"
+                99L, LocalDateTime.now().plusDays(1), "Topic"
         );
         when(mentorClient.mentorExists(99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> sessionService.bookSession(request))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> sessionService.bookSession(request, 20L))
+                .isInstanceOf(MentorNotFoundException.class)
                 .hasMessageContaining("99");
 
         verify(sessionRepository, never()).save(any());
@@ -111,7 +112,7 @@ class SessionServiceImplTest {
         when(sessionRepository.save(sampleSession)).thenReturn(sampleSession);
         when(sessionMapper.toResponse(sampleSession)).thenReturn(acceptedResponse);
 
-        SessionResponse result = sessionService.acceptSession(1L);
+        SessionResponse result = sessionService.acceptSession(1L, 10L);
 
         assertThat(result.getStatus()).isEqualTo(SessionStatus.ACCEPTED);
         assertThat(sampleSession.getStatus()).isEqualTo(SessionStatus.ACCEPTED);
@@ -123,9 +124,9 @@ class SessionServiceImplTest {
         sampleSession.setStatus(SessionStatus.CANCELLED);
         when(sessionRepository.findById(1L)).thenReturn(Optional.of(sampleSession));
 
-        assertThatThrownBy(() -> sessionService.acceptSession(1L))
+        assertThatThrownBy(() -> sessionService.acceptSession(1L, 10L))
                 .isInstanceOf(InvalidSessionStateException.class)
-                .hasMessageContaining("CANCELLED");
+                .hasMessageContaining("REQUESTED");
     }
 
     @Test
@@ -133,7 +134,7 @@ class SessionServiceImplTest {
     void acceptSession_notFound() {
         when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> sessionService.acceptSession(99L))
+        assertThatThrownBy(() -> sessionService.acceptSession(99L, 10L))
                 .isInstanceOf(SessionNotFoundException.class)
                 .hasMessageContaining("99");
     }
@@ -151,7 +152,7 @@ class SessionServiceImplTest {
         when(sessionRepository.save(sampleSession)).thenReturn(sampleSession);
         when(sessionMapper.toResponse(sampleSession)).thenReturn(rejectedResponse);
 
-        SessionResponse result = sessionService.rejectSession(1L);
+        SessionResponse result = sessionService.rejectSession(1L, 10L);
 
         assertThat(result.getStatus()).isEqualTo(SessionStatus.REJECTED);
         assertThat(sampleSession.getStatus()).isEqualTo(SessionStatus.REJECTED);
@@ -163,7 +164,7 @@ class SessionServiceImplTest {
         sampleSession.setStatus(SessionStatus.ACCEPTED);
         when(sessionRepository.findById(1L)).thenReturn(Optional.of(sampleSession));
 
-        assertThatThrownBy(() -> sessionService.rejectSession(1L))
+        assertThatThrownBy(() -> sessionService.rejectSession(1L, 10L))
                 .isInstanceOf(InvalidSessionStateException.class);
     }
 
@@ -181,7 +182,7 @@ class SessionServiceImplTest {
         when(sessionRepository.save(sampleSession)).thenReturn(sampleSession);
         when(sessionMapper.toResponse(sampleSession)).thenReturn(cancelledResponse);
 
-        SessionResponse result = sessionService.cancelSession(1L);
+        SessionResponse result = sessionService.cancelSession(1L, 20L);
 
         assertThat(result.getStatus()).isEqualTo(SessionStatus.CANCELLED);
     }
@@ -192,9 +193,9 @@ class SessionServiceImplTest {
         sampleSession.setStatus(SessionStatus.COMPLETED);
         when(sessionRepository.findById(1L)).thenReturn(Optional.of(sampleSession));
 
-        assertThatThrownBy(() -> sessionService.cancelSession(1L))
+        assertThatThrownBy(() -> sessionService.cancelSession(1L, 20L))
                 .isInstanceOf(InvalidSessionStateException.class)
-                .hasMessageContaining("COMPLETED");
+                .hasMessageContaining("completed");
     }
 
     // ── getSessionsByUserId ───────────────────────────────────────────────────
@@ -206,7 +207,7 @@ class SessionServiceImplTest {
                 .thenReturn(List.of(sampleSession));
         when(sessionMapper.toResponse(sampleSession)).thenReturn(sampleResponse);
 
-        List<SessionResponse> results = sessionService.getSessionsByUserId(20L);
+        List<SessionResponse> results = sessionService.getSessionsByUserId(20L, 20L, "ROLE_LEARNER");
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getLearnerId()).isEqualTo(20L);

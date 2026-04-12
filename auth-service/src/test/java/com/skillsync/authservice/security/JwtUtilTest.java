@@ -34,39 +34,39 @@ class JwtUtilTest {
 
     @Test
     void generateToken_shouldReturnNonNullToken() {
-        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"));
+        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"), 1L);
         assertThat(token).isNotNull().isNotEmpty();
     }
 
     @Test
     void extractEmail_shouldReturnCorrectEmail() {
         String email = "test@test.com";
-        String token = jwtUtil.generateToken(email, List.of("ROLE_LEARNER"));
+        String token = jwtUtil.generateToken(email, List.of("ROLE_LEARNER"), 1L);
         assertThat(jwtUtil.extractEmail(token)).isEqualTo(email);
     }
 
     @Test
     void extractRoles_shouldReturnCorrectRoles() {
         List<String> roles = List.of("ROLE_LEARNER", "ROLE_MENTOR");
-        String token = jwtUtil.generateToken("test@test.com", roles);
+        String token = jwtUtil.generateToken("test@test.com", roles, 1L);
         assertThat(jwtUtil.extractRoles(token)).containsExactlyInAnyOrderElementsOf(roles);
     }
 
     @Test
     void isTokenValid_shouldReturnTrueForValidToken() {
-        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"));
+        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"), 1L);
         assertThat(jwtUtil.isTokenValid(token)).isTrue();
     }
 
     @Test
     void isTokenExpired_shouldReturnFalseForFreshToken() {
-        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"));
+        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"), 1L);
         assertThat(jwtUtil.isTokenExpired(token)).isFalse();
     }
 
     @Test
     void isTokenValid_shouldReturnFalseForTamperedToken() {
-        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"));
+        String token = jwtUtil.generateToken("test@test.com", List.of("ROLE_LEARNER"), 1L);
         String tampered = token + "invalid";
         assertThat(jwtUtil.isTokenValid(tampered)).isFalse();
     }
