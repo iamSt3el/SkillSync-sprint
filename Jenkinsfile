@@ -195,11 +195,7 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                         script {
-                            def ingressIp = sh(
-                                script: "kubectl get ingress skillsync-ingress -n ${NAMESPACE} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'",
-                                returnStdout: true
-                            ).trim()
-                            def sonarUrl = "http://${ingressIp}/sonarqube"
+                            def sonarUrl = "https://skillsync.mooo.com/sonarqube"
                             def services = [
                                 'config-server', 'eureka-server', 'api-gateway',
                                 'auth-service', 'user-service', 'mentor-service',
