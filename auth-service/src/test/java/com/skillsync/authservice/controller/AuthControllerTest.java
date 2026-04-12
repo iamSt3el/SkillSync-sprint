@@ -7,10 +7,12 @@ import com.skillsync.authservice.dto.response.AuthResponse;
 import com.skillsync.authservice.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -18,8 +20,11 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AuthController.class)
-@Import(com.skillsync.authservice.config.SecurityConfig.class)
+@WebMvcTest(value = AuthController.class, excludeAutoConfiguration = {
+        SecurityAutoConfiguration.class,
+        SecurityFilterAutoConfiguration.class
+})
+@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
     @Autowired
@@ -31,20 +36,12 @@ class AuthControllerTest {
     @MockitoBean
     private AuthService authService;
 
-    @MockitoBean
-    private com.skillsync.authservice.security.JwtUtil jwtUtil;
-
-    @MockitoBean
-    private com.skillsync.authservice.security.CustomUserDetailsService customUserDetailsService;
-
-    @MockitoBean
-    private com.skillsync.authservice.security.JwtFilter jwtFilter;
-
     // --- POST /auth/register ---
 
     @Test
     void register_shouldReturn200WithToken() throws Exception {
-        RegisterRequest request = new RegisterRequest("testuser", "test@test.com", "password123");
+        // Password satisfies: uppercase, lowercase, digit, special char (@$!%*?&)
+        RegisterRequest request = new RegisterRequest("testuser", "test@test.com", "Password1@");
         AuthResponse response = new AuthResponse("mock-jwt-token");
 
         when(authService.register(any(RegisterRequest.class))).thenReturn(response);

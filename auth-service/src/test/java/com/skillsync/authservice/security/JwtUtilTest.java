@@ -4,7 +4,6 @@ import com.skillsync.authservice.config.JwtConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,7 +18,6 @@ class JwtUtilTest {
     @Mock
     private JwtConfig jwtConfig;
 
-    @InjectMocks
     private JwtUtil jwtUtil;
 
     private static final String SECRET = "mysupersecuresecretkeywhichisatleast32characterslong";
