@@ -8,6 +8,8 @@ import com.skillsync.skillservice.repository.SkillRepository;
 import com.skillsync.skillservice.service.SkillService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class SkillServiceImpl implements SkillService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "skills", allEntries = true)
     public SkillResponse createSkill(SkillRequest request) {
         if (skillRepository.existsByNameIgnoreCase(request.getName())) {
             log.warn("Skill creation rejected — already exists: name={}", request.getName());
@@ -38,6 +41,7 @@ public class SkillServiceImpl implements SkillService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "skills", key = "'all'")
     public List<SkillResponse> getAllSkills() {
         return skillRepository.findAll()
                 .stream()
@@ -47,6 +51,7 @@ public class SkillServiceImpl implements SkillService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "skills", key = "#id")
     public SkillResponse getSkillById(Long id) {
         return skillRepository.findById(id)
                 .map(this::toResponse)
@@ -55,6 +60,7 @@ public class SkillServiceImpl implements SkillService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "skills", allEntries = true)
     public void deleteSkill(Long id) {
         Skill skill = skillRepository.findById(id)
                 .orElseThrow(() -> new SkillNotFoundException("Skill not found with id: " + id));

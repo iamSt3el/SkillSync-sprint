@@ -5,11 +5,13 @@ import com.skillsync.mentorservice.repository.MentorRepository;
 import com.skillsync.mentorservice.service.MentorDiscoveryService;
 import com.skillsync.mentorservice.service.MentorService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MentorDiscoveryServiceImpl implements MentorDiscoveryService {
@@ -26,6 +28,7 @@ public class MentorDiscoveryServiceImpl implements MentorDiscoveryService {
             Integer minExp,
             Pageable pageable
     ) {
+        log.debug("Searching mentors: skillId={}, minRating={}, maxRate={}, minExp={}", skillId, minRating, maxRate, minExp);
         return mentorRepository
                 .findActiveMentorsWithFilters(skillId, minRating, maxRate, minExp, pageable)
                 .map(m -> mentorService.getMentorById(m.getId()));

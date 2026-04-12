@@ -17,7 +17,10 @@ import com.skillsync.mentorservice.feign.UserServiceClient;
 import com.skillsync.mentorservice.repository.MentorRepository;
 import com.skillsync.mentorservice.service.MentorService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MentorServiceImpl implements MentorService {
@@ -39,11 +43,13 @@ public class MentorServiceImpl implements MentorService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public MentorResponse applyAsMentor(MentorApplyRequest request, String email) {
         UserResponse user = userServiceClient.getUserByEmail(email);
         Long userId = user.getId();
 
         if (mentorRepository.existsByUserId(userId)) {
+            log.warn("Mentor application rejected — already exists: userId={}", userId);
             throw new IllegalStateException("User has already applied as a mentor");
         }
 
@@ -73,11 +79,13 @@ public class MentorServiceImpl implements MentorService {
         }
 
         Mentor saved = mentorRepository.save(mentor);
+        log.info("Mentor application submitted: userId={}, mentorId={}", userId, saved.getId());
         return buildMentorResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "mentors", key = "#id")
     public MentorResponse getMentorById(Long id) {
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
@@ -86,6 +94,7 @@ public class MentorServiceImpl implements MentorService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "mentors", key = "'active-list'")
     public List<MentorResponse> getAllActiveMentors() {
         return mentorRepository.findByStatus(MentorStatus.ACTIVE)
                 .stream()
@@ -102,6 +111,7 @@ public class MentorServiceImpl implements MentorService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "mentors", key = "#id")
     public MentorResponse updateAvailability(Long id, AvailabilityRequest request, Long userId) {
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
@@ -109,11 +119,13 @@ public class MentorServiceImpl implements MentorService {
             throw new SecurityException("You can only update your own availability");
         }
         mentor.setAvailability(request.getSchedule());
+        log.info("Availability updated: mentorId={}", id);
         return buildMentorResponse(mentorRepository.save(mentor));
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public MentorResponse approveMentor(Long id) {
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
@@ -121,15 +133,18 @@ public class MentorServiceImpl implements MentorService {
         Mentor saved = mentorRepository.save(mentor);
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.MENTOR_APPROVED_KEY,
                 new MentorApprovedEvent(saved.getUserId()));
+        log.info("Mentor approved: mentorId={}, userId={}", saved.getId(), saved.getUserId());
         return buildMentorResponse(saved);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public MentorResponse rejectMentor(Long id) {
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
         mentor.setStatus(MentorStatus.REJECTED);
+        log.info("Mentor rejected: mentorId={}", id);
         return buildMentorResponse(mentorRepository.save(mentor));
     }
 
@@ -151,10 +166,12 @@ public class MentorServiceImpl implements MentorService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "mentors", allEntries = true)
     public void deleteMentor(Long id) {
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + id));
         mentorRepository.delete(mentor);
+        log.info("Mentor deleted: mentorId={}", id);
     }
 
     @Override
@@ -167,6 +184,7 @@ public class MentorServiceImpl implements MentorService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "mentors", key = "#mentorId")
     public void updateRating(Long mentorId, double newRating) {
         Mentor mentor = mentorRepository.findById(mentorId)
                 .orElseThrow(() -> new MentorNotFoundException(MENTOR_NOT_FOUND + mentorId));
@@ -177,6 +195,7 @@ public class MentorServiceImpl implements MentorService {
         mentor.setRating(Math.round(updatedRating * 10.0) / 10.0);
         mentor.setReviewCount(totalReviews);
         mentorRepository.save(mentor);
+        log.info("Rating updated: mentorId={}, newAvgRating={}, totalReviews={}", mentorId, mentor.getRating(), totalReviews);
     }
 
     @Override

@@ -7,6 +7,8 @@ import com.skillsync.userservice.exception.UserNotFoundException;
 import com.skillsync.userservice.repository.UserRepository;
 import com.skillsync.userservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,16 +50,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#id")
     public Optional<UserDTO> getUserById(Long id) {
         return userRepository.findById(id).map(UserDTO::new);
     }
 
     @Override
+    @Cacheable(value = "users", key = "'email:' + #email")
     public Optional<UserDTO> getUserByEmail(String email) {
         return userRepository.findByEmail(email).map(UserDTO::new);
     }
 
     @Override
+    @CacheEvict(value = "users", key = "#id")
     public UserDTO updateUser(Long id, UserDTO userDetails) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
@@ -78,6 +83,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "users", key = "#id")
     public UserDTO updateProfilePicture(Long id, String pictureUrl) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
@@ -88,6 +94,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "users", key = "#id")
     public boolean deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND);
@@ -98,6 +105,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "users", key = "#id")
     public UserDTO blockUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));
@@ -108,6 +116,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "users", key = "#id")
     public UserDTO unblockUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_WITH_ID + id + NOT_FOUND));

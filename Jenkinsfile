@@ -31,15 +31,25 @@ pipeline {
                 stage('config-server')        { steps { dir('config-server')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
                 stage('eureka-server')        { steps { dir('eureka-server')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
                 stage('api-gateway')          { steps { dir('api-gateway')          { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('auth-service')         { steps { dir('auth-service')         { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('user-service')         { steps { dir('user-service')         { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('mentor-service')       { steps { dir('mentor-service')       { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('skill-service')        { steps { dir('skill-service')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('session-service')      { steps { dir('session-service')      { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('group-service')        { steps { dir('group-service')        { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('review-service')       { steps { dir('review-service')       { sh 'mvn clean package -Dmaven.test.skip=true' } } }
-                stage('notification-service') { steps { dir('notification-service') { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+                stage('auth-service')         { steps { dir('auth-service')         { sh 'mvn clean verify' } } }
+                stage('user-service')         { steps { dir('user-service')         { sh 'mvn clean verify' } } }
+                stage('mentor-service')       { steps { dir('mentor-service')       { sh 'mvn clean verify' } } }
+                stage('skill-service')        { steps { dir('skill-service')        { sh 'mvn clean verify' } } }
+                stage('session-service')      { steps { dir('session-service')      { sh 'mvn clean verify' } } }
+                stage('group-service')        { steps { dir('group-service')        { sh 'mvn clean verify' } } }
+                stage('review-service')       { steps { dir('review-service')       { sh 'mvn clean verify' } } }
+                stage('notification-service') { steps { dir('notification-service') { sh 'mvn clean verify' } } }
                 stage('payment-service')      { steps { dir('payment-service')      { sh 'mvn clean package -Dmaven.test.skip=true' } } }
+            }
+        }
+
+        // ── 2b. Publish test results ───────────────────────────────────────────
+        stage('Publish Test Results') {
+            steps {
+                junit(
+                    testResults: '**/target/surefire-reports/*.xml',
+                    allowEmptyResults: true
+                )
             }
         }
 

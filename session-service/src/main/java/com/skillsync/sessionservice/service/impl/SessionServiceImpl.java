@@ -44,6 +44,7 @@ public class SessionServiceImpl implements SessionService {
         Session session = sessionMapper.toEntity(request, learnerId);
         Session saved = sessionRepository.save(session);
 
+        log.info("Session booked: sessionId={}, learnerId={}, mentorId={}", saved.getId(), learnerId, request.getMentorId());
         publishSessionEvent(saved, RabbitMQConfig.SESSION_BOOKED_KEY);
         return sessionMapper.toResponse(saved);
     }
@@ -62,6 +63,7 @@ public class SessionServiceImpl implements SessionService {
 
         session.setStatus(SessionStatus.ACCEPTED);
         Session updated = sessionRepository.save(session);
+        log.info("Session accepted: sessionId={}, mentorId={}", sessionId, userId);
         publishSessionEvent(updated, RabbitMQConfig.SESSION_ACCEPTED_KEY);
         return sessionMapper.toResponse(updated);
     }
@@ -80,6 +82,7 @@ public class SessionServiceImpl implements SessionService {
 
         session.setStatus(SessionStatus.REJECTED);
         Session updated = sessionRepository.save(session);
+        log.info("Session rejected: sessionId={}, mentorId={}", sessionId, userId);
         publishSessionEvent(updated, RabbitMQConfig.SESSION_REJECTED_KEY);
         return sessionMapper.toResponse(updated);
     }
@@ -104,6 +107,7 @@ public class SessionServiceImpl implements SessionService {
 
         session.setStatus(SessionStatus.CANCELLED);
         Session updated = sessionRepository.save(session);
+        log.info("Session cancelled: sessionId={}, cancelledBy={}", sessionId, userId);
         publishSessionEvent(updated, RabbitMQConfig.SESSION_CANCELLED_KEY);
         return sessionMapper.toResponse(updated);
     }
@@ -145,6 +149,7 @@ public class SessionServiceImpl implements SessionService {
         }
         session.setStatus(SessionStatus.COMPLETED);
         Session updated = sessionRepository.save(session);
+        log.info("Session completed: sessionId={}, mentorId={}", sessionId, userId);
         publishSessionEvent(updated, RabbitMQConfig.SESSION_COMPLETED_KEY);
         return sessionMapper.toResponse(updated);
     }
@@ -159,6 +164,7 @@ public class SessionServiceImpl implements SessionService {
         }
         session.setStatus(SessionStatus.CANCELLED);
         Session updated = sessionRepository.save(session);
+        log.info("Session admin-cancelled: sessionId={}", sessionId);
         publishSessionEvent(updated, RabbitMQConfig.SESSION_CANCELLED_KEY);
         return sessionMapper.toResponse(updated);
     }

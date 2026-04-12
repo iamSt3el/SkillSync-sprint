@@ -19,6 +19,18 @@ services:
     networks:
       - skillsync-net
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - skillsync-net
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -133,10 +145,13 @@ services:
       SPRING_APPLICATION_NAME: user-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_DATA_REDIS_HOST: redis
     depends_on:
       mysql:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
@@ -155,10 +170,13 @@ services:
       SPRING_APPLICATION_NAME: mentor-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_DATA_REDIS_HOST: redis
     depends_on:
       mysql:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
@@ -177,8 +195,11 @@ services:
       SPRING_APPLICATION_NAME: skill-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_DATA_REDIS_HOST: redis
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       eureka-server:
         condition: service_healthy

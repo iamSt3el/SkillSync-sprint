@@ -75,5 +75,6 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(() -> new NotificationNotFoundException(notificationId));
         notification.setRead(true);
         notificationRepository.save(notification);
+        log.info("Notification marked as read: notificationId={}, userId={}", notificationId, notification.getUserId());
     }
 }
