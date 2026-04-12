@@ -36,6 +36,15 @@ class AuthControllerTest {
     @MockitoBean
     private AuthService authService;
 
+    @MockitoBean
+    private com.skillsync.authservice.security.JwtUtil jwtUtil;
+
+    @MockitoBean
+    private com.skillsync.authservice.security.JwtFilter jwtFilter;
+
+    @MockitoBean
+    private com.skillsync.authservice.security.CustomUserDetailsService customUserDetailsService;
+
     // --- POST /auth/register ---
 
     @Test
