@@ -9,6 +9,6 @@ import com.skillsync.groupservice.entity.Group;
 import com.skillsync.groupservice.entity.GroupMember;
 
 public interface GroupMemberRepository extends JpaRepository<GroupMember, Long>{
-	public Optional<GroupMember> findByGroupIdAndUserId(Long groupId, Long userId);
+	public Optional<GroupMember> findFirstByGroupIdAndUserId(Long groupId, Long userId);
 	
 }

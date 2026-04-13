@@ -107,15 +107,17 @@ pipeline {
                 sh '''
                     kubectl apply -f k8s/infrastructure/mysql.yaml
                     kubectl apply -f k8s/infrastructure/rabbitmq.yaml
+                    kubectl apply -f k8s/infrastructure/redis.yaml
                     kubectl apply -f k8s/infrastructure/zipkin.yaml
                     kubectl apply -f k8s/infrastructure/prometheus.yaml
                     kubectl apply -f k8s/infrastructure/grafana.yaml
                     kubectl apply -f k8s/infrastructure/postgres-sonarqube.yaml
                     kubectl apply -f k8s/infrastructure/sonarqube.yaml
 
-                    # Wait for MySQL and RabbitMQ to be ready before continuing
+                    # Wait for MySQL, RabbitMQ and Redis to be ready before continuing
                     kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=300s
                     kubectl rollout status statefulset/rabbitmq -n $NAMESPACE --timeout=300s
+                    kubectl rollout status deployment/redis     -n $NAMESPACE --timeout=120s
                 '''
             }
         }

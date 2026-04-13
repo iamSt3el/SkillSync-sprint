@@ -27,7 +27,7 @@ public class RedisConfig {
         mapper.activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
                 ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
+                JsonTypeInfo.As.WRAPPER_ARRAY
         );
 
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()

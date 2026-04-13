@@ -40,7 +40,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     @Override
     public GroupMemberResponseDTO joinGroup(GroupMemberRequestDTO dto, Long groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new GroupNotFoundException(groupId));
-        boolean alreadyMember = groupMemberRepository.findByGroupIdAndUserId(group.getId(), dto.getUserId())
+        boolean alreadyMember = groupMemberRepository.findFirstByGroupIdAndUserId(group.getId(), dto.getUserId())
                 .isPresent();
 
         if (alreadyMember) {
@@ -67,7 +67,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     @Override
     @Transactional
     public void leaveGroup(GroupMemberRequestDTO dto, Long groupId) {
-        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, dto.getUserId())
+        GroupMember member = groupMemberRepository.findFirstByGroupIdAndUserId(groupId, dto.getUserId())
                 .orElseThrow(() -> new GroupMemberNotFoundException(dto.getUserId()));
 
         Group group = member.getGroup();

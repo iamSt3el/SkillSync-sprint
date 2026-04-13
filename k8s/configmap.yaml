@@ -8,4 +8,6 @@ data:
   SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
   SPRING_RABBITMQ_HOST: "rabbitmq"
   SPRING_RABBITMQ_PORT: "5672"
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
   JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m"
