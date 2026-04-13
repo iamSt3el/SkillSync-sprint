@@ -67,7 +67,7 @@ class GroupMemberServiceImplTest {
                 .id(10L).groupId(1L).userId(20L).build();
 
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.findByGroupIdAndUserId(1L, 20L)).thenReturn(Optional.empty());
+        when(groupMemberRepository.findFirstByGroupIdAndUserId(1L, 20L)).thenReturn(Optional.empty());
         when(groupMemberMapper.toEntity(memberRequest, group)).thenReturn(member);
         when(groupMemberRepository.save(member)).thenReturn(member);
         when(groupMemberMapper.toResponseDto(member)).thenReturn(responseDTO);
@@ -83,7 +83,7 @@ class GroupMemberServiceImplTest {
     @DisplayName("joinGroup: throws MemberAlreadyInGroupException when user is already a member")
     void joinGroup_alreadyMember() {
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.findByGroupIdAndUserId(1L, 20L)).thenReturn(Optional.of(member));
+        when(groupMemberRepository.findFirstByGroupIdAndUserId(1L, 20L)).thenReturn(Optional.of(member));
 
         assertThatThrownBy(() -> groupMemberService.joinGroup(memberRequest, 1L))
                 .isInstanceOf(MemberAlreadyInGroupException.class)
@@ -107,7 +107,7 @@ class GroupMemberServiceImplTest {
     @Test
     @DisplayName("leaveGroup: removes member from group and publishes event")
     void leaveGroup_success() {
-        when(groupMemberRepository.findByGroupIdAndUserId(1L, 20L)).thenReturn(Optional.of(member));
+        when(groupMemberRepository.findFirstByGroupIdAndUserId(1L, 20L)).thenReturn(Optional.of(member));
 
         groupMemberService.leaveGroup(memberRequest, 1L);
 
@@ -118,7 +118,7 @@ class GroupMemberServiceImplTest {
     @Test
     @DisplayName("leaveGroup: throws GroupMemberNotFoundException when member not in group")
     void leaveGroup_memberNotFound() {
-        when(groupMemberRepository.findByGroupIdAndUserId(1L, 99L)).thenReturn(Optional.empty());
+        when(groupMemberRepository.findFirstByGroupIdAndUserId(1L, 99L)).thenReturn(Optional.empty());
 
         GroupMemberRequestDTO nonMember = GroupMemberRequestDTO.builder().userId(99L).build();
 
