@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -99,7 +100,7 @@ public class MentorServiceImpl implements MentorService {
         return mentorRepository.findByStatus(MentorStatus.ACTIVE)
                 .stream()
                 .map(this::buildMentorResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.skillsync.skillservice.repository.SkillRepository;
 import com.skillsync.skillservice.service.SkillService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ public class SkillServiceImpl implements SkillService {
         return skillRepository.findAll()
                 .stream()
                 .map(this::toResponse)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
