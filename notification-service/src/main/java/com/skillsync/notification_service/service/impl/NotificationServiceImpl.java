@@ -53,6 +53,10 @@ public class NotificationServiceImpl implements NotificationService {
         webSocketHandler.sendNotification(userId, mapper.toResponseDto(saved));
 
         String userEmail = userServiceClient.getUserEmail(userId);
+        if (userEmail == null) {
+            log.warn("Email notification skipped for userId={}: user-service unavailable", userId);
+            return;
+        }
         try {
             emailService.sendEmail(userEmail, type.name(), message);
             log.info("Email notification sent to userId={}", userId);

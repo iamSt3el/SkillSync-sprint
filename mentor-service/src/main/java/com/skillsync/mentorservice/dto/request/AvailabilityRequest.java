@@ -5,13 +5,11 @@
 
 package com.skillsync.mentorservice.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class AvailabilityRequest {
 
-//	NotBlank annotation ensures that this String is not empty.
-    @NotBlank(message = "Availability schedule is required")
+    // Empty string means "unavailable" — no validation constraint needed.
     private String schedule;
 }
