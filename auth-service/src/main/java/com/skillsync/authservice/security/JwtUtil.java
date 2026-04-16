@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.skillsync.authservice.config.JwtConfig;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -47,6 +48,20 @@ public class JwtUtil {
     // extract email
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
+    }
+
+    // extract claims even from an expired token (signature is still validated)
+    private Claims extractClaimsAllowExpired(String token) {
+        try {
+            return extractClaims(token);
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        }
+    }
+
+    // extract email from an expired-but-signature-valid token (used by refresh endpoint)
+    public String extractEmailAllowExpired(String token) {
+        return extractClaimsAllowExpired(token).getSubject();
     }
 
     // extract roles

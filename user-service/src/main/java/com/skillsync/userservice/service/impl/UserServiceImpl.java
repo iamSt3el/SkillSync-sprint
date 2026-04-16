@@ -50,13 +50,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Cacheable(value = "users", key = "#id", unless = "#result == null || !#result.isPresent()")
+    @Cacheable(value = "users", key = "#id", unless = "#result == null")
     public Optional<UserDTO> getUserById(Long id) {
         return userRepository.findById(id).map(UserDTO::new);
     }
 
     @Override
-    @Cacheable(value = "users", key = "'email:' + #email", unless = "#result == null || !#result.isPresent()")
+    @Cacheable(value = "users", key = "'email:' + #email", unless = "#result == null")
     public Optional<UserDTO> getUserByEmail(String email) {
         return userRepository.findByEmail(email).map(UserDTO::new);
     }

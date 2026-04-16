@@ -135,12 +135,14 @@ public class AuthServiceImpl implements AuthService {
 
 	@Override
 	public AuthResponse refreshToken(String token) {
-
-		if (jwtUtil.isTokenExpired(token)) {
+		// Accept expired tokens — signature is still validated by extractEmailAllowExpired.
+		// This allows the frontend to exchange an expired token for a fresh one.
+		String email;
+		try {
+			email = jwtUtil.extractEmailAllowExpired(token);
+		} catch (Exception e) {
 			throw new InvalidTokenException();
 		}
-
-		String email = jwtUtil.extractEmail(token);
 
 		User user = userRepository.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
 
