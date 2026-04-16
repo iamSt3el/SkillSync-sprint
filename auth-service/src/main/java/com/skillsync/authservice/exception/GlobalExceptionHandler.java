@@ -24,6 +24,13 @@ public class GlobalExceptionHandler {
 		return buildResponse(HttpStatus.CONFLICT, "USER_ALREADY_EXISTS", e.getMessage(), request);
 	}
 
+	@ExceptionHandler(UsernameAlreadyTakenException.class)
+	public ResponseEntity<ErrorResponseDTO> handleUsernameAlreadyTaken(UsernameAlreadyTakenException e,
+			HttpServletRequest request) {
+		log.error("UsernameAlreadyTaken: {}", e.getMessage());
+		return buildResponse(HttpStatus.CONFLICT, "USERNAME_ALREADY_TAKEN", e.getMessage(), request);
+	}
+
 	@ExceptionHandler(RoleNotFoundException.class)
 	public ResponseEntity<ErrorResponseDTO> handleRoleNotFound(RoleNotFoundException e,
 			HttpServletRequest request) {

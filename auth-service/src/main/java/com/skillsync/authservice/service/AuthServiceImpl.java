@@ -30,6 +30,7 @@ import com.skillsync.authservice.exception.InvalidCredentialsException;
 import com.skillsync.authservice.exception.InvalidResetTokenException;
 import com.skillsync.authservice.exception.InvalidTokenException;
 import com.skillsync.authservice.exception.UserAlreadyExistsException;
+import com.skillsync.authservice.exception.UsernameAlreadyTakenException;
 import com.skillsync.authservice.repository.PasswordResetTokenRepository;
 import com.skillsync.authservice.repository.RoleRepository;
 import com.skillsync.authservice.repository.UserRepository;
@@ -72,6 +73,10 @@ public class AuthServiceImpl implements AuthService {
 
 		if (userRepository.existsByEmail(request.email())) {
 			throw new UserAlreadyExistsException(request.email());
+		}
+
+		if (userRepository.existsByUsername(request.username())) {
+			throw new UsernameAlreadyTakenException(request.username());
 		}
 
 		User user = new User();
