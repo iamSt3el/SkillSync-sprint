@@ -11,6 +11,7 @@ import com.skillsync.authservice.repository.PasswordResetTokenRepository;
 import com.skillsync.authservice.repository.RoleRepository;
 import com.skillsync.authservice.repository.UserRepository;
 import com.skillsync.authservice.security.JwtUtil;
+import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -128,8 +129,7 @@ class AuthServiceImplTest {
     void refreshToken_shouldReturnNewTokenWhenValid() {
         String oldToken = "valid-token";
 
-        when(jwtUtil.isTokenExpired(oldToken)).thenReturn(false);
-        when(jwtUtil.extractEmail(oldToken)).thenReturn("test@test.com");
+        when(jwtUtil.extractEmailAllowExpired(oldToken)).thenReturn("test@test.com");
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(mockUser));
         when(jwtUtil.generateToken(anyString(), any(), any())).thenReturn("new-jwt-token");
 
@@ -139,13 +139,28 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void refreshToken_shouldThrowWhenTokenIsExpired() {
+    void refreshToken_shouldReturnNewTokenWhenTokenIsExpired() {
+        // Expired tokens with a valid signature should still be accepted for refresh
         String expiredToken = "expired-token";
 
-        when(jwtUtil.isTokenExpired(expiredToken)).thenReturn(true);
+        when(jwtUtil.extractEmailAllowExpired(expiredToken)).thenReturn("test@test.com");
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(mockUser));
+        when(jwtUtil.generateToken(anyString(), any(), any())).thenReturn("new-jwt-token");
 
-        assertThatThrownBy(() -> authService.refreshToken(expiredToken))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("expired");
+        AuthResponse response = authService.refreshToken(expiredToken);
+
+        assertThat(response.token()).isEqualTo("new-jwt-token");
+    }
+
+    @Test
+    void refreshToken_shouldThrowWhenTokenIsInvalid() {
+        // Tokens with a bad signature or malformed structure must be rejected
+        String invalidToken = "invalid-token";
+
+        when(jwtUtil.extractEmailAllowExpired(invalidToken))
+                .thenThrow(new JwtException("Invalid signature"));
+
+        assertThatThrownBy(() -> authService.refreshToken(invalidToken))
+                .isInstanceOf(RuntimeException.class);
     }
 }
