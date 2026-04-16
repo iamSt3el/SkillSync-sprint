@@ -70,6 +70,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String authHeader = stripped.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            setCorsHeaders(request, response);
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             return;
         }
@@ -89,6 +90,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String userId = claims.get("userId") != null ? claims.get("userId").toString() : "";
 
             if (path.startsWith("/admin/") && !"ROLE_ADMIN".equals(role)) {
+                setCorsHeaders(request, response);
                 response.setStatus(HttpStatus.FORBIDDEN.value());
                 return;
             }
@@ -96,7 +98,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(injectUserHeaders(stripped, email, role, userId), response);
 
         } catch (JwtException e) {
+            setCorsHeaders(request, response);
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        }
+    }
+
+    private static void setCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
+        String origin = request.getHeader("Origin");
+        if (origin != null) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Vary", "Origin");
         }
     }
 
