@@ -6,6 +6,7 @@ import com.skillsync.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MentorApprovedConsumer {
 
     private final UserRepository userRepository;
+    private final CacheManager cacheManager;
 
     @RabbitListener(queues = RabbitMQConfig.MENTOR_APPROVED_USER_QUEUE)
     @Transactional
@@ -30,6 +32,10 @@ public class MentorApprovedConsumer {
 
         user.setRole("ROLE_MENTOR");
         userRepository.save(user);
+
+        var cache = cacheManager.getCache("users");
+        if (cache != null) cache.evict(userId);
+
         log.info("Role updated to ROLE_MENTOR for userId={}", userId);
     }
 }
