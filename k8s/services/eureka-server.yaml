@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: eureka-server
-          image: asia-south1-docker.pkg.dev/project-00909acc-d419-4f02-8a1/skillsync-repo/eureka-server:latest
+          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.ap-south-1.amazonaws.com/skillsync-repo/eureka-server:latest
           ports:
             - containerPort: 8761
           env:

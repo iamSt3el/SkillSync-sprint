@@ -4,6 +4,7 @@ metadata:
   name: sonar-postgres-pvc
   namespace: skillsync
 spec:
+  storageClassName: gp2
   accessModes:
     - ReadWriteOnce
   resources:

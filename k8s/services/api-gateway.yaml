@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: asia-south1-docker.pkg.dev/project-00909acc-d419-4f02-8a1/skillsync-repo/api-gateway:latest
+          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.ap-south-1.amazonaws.com/skillsync-repo/api-gateway:latest
           ports:
             - containerPort: 9090
           envFrom:

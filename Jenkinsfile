@@ -2,14 +2,12 @@ pipeline {
     agent any
 
     environment {
-        PROJECT_ID  = 'project-00909acc-d419-4f02-8a1'
-        REGION      = 'asia-south1'
-        CLUSTER     = 'skillsync-cluster'
-        REPO        = 'skillsync-repo'
-        REGISTRY    = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}"
-        TAG         = "${env.BUILD_NUMBER}"
-        NAMESPACE   = 'skillsync'
-        USE_GKE_GCLOUD_AUTH_PLUGIN = 'True'   // required for kubectl to auth with GKE
+        AWS_ACCOUNT_ID = '029422951382'
+        REGION         = 'eu-north-1'
+        CLUSTER        = 'skillsync-cluster'
+        REGISTRY       = "${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+        TAG            = "${env.BUILD_NUMBER}"
+        NAMESPACE      = 'skillsync'
     }
 
     tools {
@@ -53,13 +51,15 @@ pipeline {
             }
         }
 
-        // ── 3. Authenticate with GCP ───────────────────────────────────────────
-        stage('GCP Auth') {
+        // ── 3. Authenticate with AWS ECR ──────────────────────────────────────
+        stage('AWS ECR Auth') {
             steps {
-                sh '''
-                    gcloud config set project $PROJECT_ID
-                    gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh 'aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $REGISTRY'
+                }
             }
         }
 
@@ -81,12 +81,15 @@ pipeline {
             }
         }
 
-        // ── 5. Connect kubectl to GKE ──────────────────────────────────────────
-        stage('Connect to GKE') {
+        // ── 5. Connect kubectl to EKS ─────────────────────────────────────────
+        stage('Connect to EKS') {
             steps {
-                sh '''
-                    gcloud container clusters get-credentials $CLUSTER --region $REGION --project $PROJECT_ID
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh 'aws eks update-kubeconfig --region $REGION --name $CLUSTER'
+                }
             }
         }
 
@@ -126,7 +129,7 @@ pipeline {
         stage('Deploy config-server') {
             steps {
                 sh """
-                    sed 's|:latest|:${TAG}|g' k8s/services/config-server.yaml | kubectl apply -f -
+                    sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/config-server.yaml | kubectl apply -f -
                     kubectl rollout status deployment/config-server -n ${NAMESPACE} --timeout=300s
                 """
             }
@@ -136,7 +139,7 @@ pipeline {
         stage('Deploy eureka-server') {
             steps {
                 sh """
-                    sed 's|:latest|:${TAG}|g' k8s/services/eureka-server.yaml | kubectl apply -f -
+                    sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/eureka-server.yaml | kubectl apply -f -
                     kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=300s
                 """
             }
@@ -145,15 +148,15 @@ pipeline {
         // ── 10. Deploy all business services in parallel ───────────────────────
         stage('Deploy Business Services') {
             parallel {
-                stage('auth-service')         { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/auth-service.yaml | kubectl apply -f -" } }
-                stage('user-service')         { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/user-service.yaml | kubectl apply -f -" } }
-                stage('mentor-service')       { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/mentor-service.yaml | kubectl apply -f -" } }
-                stage('skill-service')        { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/skill-service.yaml | kubectl apply -f -" } }
-                stage('session-service')      { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/session-service.yaml | kubectl apply -f -" } }
-                stage('group-service')        { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/group-service.yaml | kubectl apply -f -" } }
-                stage('review-service')       { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/review-service.yaml | kubectl apply -f -" } }
-                stage('notification-service') { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/notification-service.yaml | kubectl apply -f -" } }
-                stage('payment-service')      { steps { sh "sed 's|:latest|:${TAG}|g' k8s/services/payment-service.yaml | kubectl apply -f -" } }
+                stage('auth-service')         { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/auth-service.yaml | kubectl apply -f -" } }
+                stage('user-service')         { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/user-service.yaml | kubectl apply -f -" } }
+                stage('mentor-service')       { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/mentor-service.yaml | kubectl apply -f -" } }
+                stage('skill-service')        { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/skill-service.yaml | kubectl apply -f -" } }
+                stage('session-service')      { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/session-service.yaml | kubectl apply -f -" } }
+                stage('group-service')        { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/group-service.yaml | kubectl apply -f -" } }
+                stage('review-service')       { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/review-service.yaml | kubectl apply -f -" } }
+                stage('notification-service') { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/notification-service.yaml | kubectl apply -f -" } }
+                stage('payment-service')      { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/payment-service.yaml | kubectl apply -f -" } }
             }
         }
 
@@ -161,7 +164,7 @@ pipeline {
         stage('Deploy api-gateway') {
             steps {
                 sh """
-                    sed 's|:latest|:${TAG}|g' k8s/services/api-gateway.yaml | kubectl apply -f -
+                    sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/api-gateway.yaml | kubectl apply -f -
                     kubectl rollout status deployment/api-gateway -n ${NAMESPACE} --timeout=300s
                 """
             }

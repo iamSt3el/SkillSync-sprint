@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: notification-service
-          image: asia-south1-docker.pkg.dev/project-00909acc-d419-4f02-8a1/skillsync-repo/notification-service:latest
+          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.ap-south-1.amazonaws.com/skillsync-repo/notification-service:latest
           ports:
             - containerPort: 8088
           envFrom:
