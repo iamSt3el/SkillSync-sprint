@@ -5,7 +5,7 @@ pipeline {
         AWS_ACCOUNT_ID = '029422951382'
         REGION         = 'eu-north-1'
         CLUSTER        = 'skillsync-cluster'
-        REGISTRY       = "${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+        REGISTRY       = "${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/skillsync-repo"
         TAG            = "${env.BUILD_NUMBER}"
         NAMESPACE      = 'skillsync'
     }
