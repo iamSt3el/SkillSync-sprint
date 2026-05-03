@@ -126,9 +126,9 @@ pipeline {
                         kubectl apply -f k8s/infrastructure/postgres-sonarqube.yaml
                         kubectl apply -f k8s/infrastructure/sonarqube.yaml
 
-                        kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=300s
-                        kubectl rollout status statefulset/rabbitmq -n $NAMESPACE --timeout=300s
-                        kubectl rollout status deployment/redis     -n $NAMESPACE --timeout=120s
+                        kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=600s
+                        kubectl rollout status statefulset/rabbitmq -n $NAMESPACE --timeout=600s
+                        kubectl rollout status deployment/redis     -n $NAMESPACE --timeout=180s
                     '''
                 }
             }
