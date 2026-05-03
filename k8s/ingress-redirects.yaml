@@ -3,8 +3,7 @@ kind: Ingress
 metadata:
   name: skillsync-redirects
   namespace: skillsync
-  annotations:
-    nginx.ingress.kubernetes.io/permanent-redirect: "$scheme://$host$request_uri/"
+  annotations: {}
 spec:
   ingressClassName: nginx
   rules:
