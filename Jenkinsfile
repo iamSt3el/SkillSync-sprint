@@ -96,92 +96,121 @@ pipeline {
         // ── 6. Apply namespace, secrets, configmap ─────────────────────────────
         stage('Apply Base Configs') {
             steps {
-                sh '''
-                    kubectl apply -f k8s/namespace.yaml
-                    kubectl apply -f k8s/secrets.yaml
-                    kubectl apply -f k8s/configmap.yaml
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh '''
+                        kubectl apply -f k8s/namespace.yaml
+                        kubectl apply -f k8s/secrets.yaml
+                        kubectl apply -f k8s/configmap.yaml
+                    '''
+                }
             }
         }
 
         // ── 7. Deploy infrastructure (MySQL, RabbitMQ, Zipkin, SonarQube …) ───────
         stage('Deploy Infrastructure') {
             steps {
-                sh '''
-                    kubectl apply -f k8s/infrastructure/mysql.yaml
-                    kubectl apply -f k8s/infrastructure/rabbitmq.yaml
-                    kubectl apply -f k8s/infrastructure/redis.yaml
-                    kubectl apply -f k8s/infrastructure/zipkin.yaml
-                    kubectl apply -f k8s/infrastructure/prometheus.yaml
-                    kubectl apply -f k8s/infrastructure/grafana.yaml
-                    kubectl apply -f k8s/infrastructure/postgres-sonarqube.yaml
-                    kubectl apply -f k8s/infrastructure/sonarqube.yaml
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh '''
+                        kubectl apply -f k8s/infrastructure/mysql.yaml
+                        kubectl apply -f k8s/infrastructure/rabbitmq.yaml
+                        kubectl apply -f k8s/infrastructure/redis.yaml
+                        kubectl apply -f k8s/infrastructure/zipkin.yaml
+                        kubectl apply -f k8s/infrastructure/prometheus.yaml
+                        kubectl apply -f k8s/infrastructure/grafana.yaml
+                        kubectl apply -f k8s/infrastructure/postgres-sonarqube.yaml
+                        kubectl apply -f k8s/infrastructure/sonarqube.yaml
 
-                    # Wait for MySQL, RabbitMQ and Redis to be ready before continuing
-                    kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=300s
-                    kubectl rollout status statefulset/rabbitmq -n $NAMESPACE --timeout=300s
-                    kubectl rollout status deployment/redis     -n $NAMESPACE --timeout=120s
-                '''
+                        kubectl rollout status statefulset/mysql    -n $NAMESPACE --timeout=300s
+                        kubectl rollout status statefulset/rabbitmq -n $NAMESPACE --timeout=300s
+                        kubectl rollout status deployment/redis     -n $NAMESPACE --timeout=120s
+                    '''
+                }
             }
         }
 
         // ── 8. Deploy config-server first, wait until ready ────────────────────
         stage('Deploy config-server') {
             steps {
-                sh """
-                    sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/config-server.yaml | kubectl apply -f -
-                    kubectl rollout status deployment/config-server -n ${NAMESPACE} --timeout=300s
-                """
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh """
+                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/config-server.yaml | kubectl apply -f -
+                        kubectl rollout status deployment/config-server -n ${NAMESPACE} --timeout=300s
+                    """
+                }
             }
         }
 
         // ── 9. Deploy eureka-server second, wait until ready ───────────────────
         stage('Deploy eureka-server') {
             steps {
-                sh """
-                    sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/eureka-server.yaml | kubectl apply -f -
-                    kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=300s
-                """
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh """
+                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/eureka-server.yaml | kubectl apply -f -
+                        kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=300s
+                    """
+                }
             }
         }
 
         // ── 10. Deploy all business services in parallel ───────────────────────
         stage('Deploy Business Services') {
             parallel {
-                stage('auth-service')         { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/auth-service.yaml | kubectl apply -f -" } }
-                stage('user-service')         { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/user-service.yaml | kubectl apply -f -" } }
-                stage('mentor-service')       { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/mentor-service.yaml | kubectl apply -f -" } }
-                stage('skill-service')        { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/skill-service.yaml | kubectl apply -f -" } }
-                stage('session-service')      { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/session-service.yaml | kubectl apply -f -" } }
-                stage('group-service')        { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/group-service.yaml | kubectl apply -f -" } }
-                stage('review-service')       { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/review-service.yaml | kubectl apply -f -" } }
-                stage('notification-service') { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/notification-service.yaml | kubectl apply -f -" } }
-                stage('payment-service')      { steps { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/payment-service.yaml | kubectl apply -f -" } }
+                stage('auth-service')         { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/auth-service.yaml | kubectl apply -f -" } } }
+                stage('user-service')         { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/user-service.yaml | kubectl apply -f -" } } }
+                stage('mentor-service')       { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/mentor-service.yaml | kubectl apply -f -" } } }
+                stage('skill-service')        { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/skill-service.yaml | kubectl apply -f -" } } }
+                stage('session-service')      { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/session-service.yaml | kubectl apply -f -" } } }
+                stage('group-service')        { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/group-service.yaml | kubectl apply -f -" } } }
+                stage('review-service')       { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/review-service.yaml | kubectl apply -f -" } } }
+                stage('notification-service') { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/notification-service.yaml | kubectl apply -f -" } } }
+                stage('payment-service')      { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/payment-service.yaml | kubectl apply -f -" } } }
             }
         }
 
         // ── 11. Deploy api-gateway last ────────────────────────────────────────
         stage('Deploy api-gateway') {
             steps {
-                sh """
-                    sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/api-gateway.yaml | kubectl apply -f -
-                    kubectl rollout status deployment/api-gateway -n ${NAMESPACE} --timeout=300s
-                """
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh """
+                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/api-gateway.yaml | kubectl apply -f -
+                        kubectl rollout status deployment/api-gateway -n ${NAMESPACE} --timeout=300s
+                    """
+                }
             }
         }
 
         // ── 12. Apply Ingress ──────────────────────────────────────────────────
         stage('Apply Ingress') {
             steps {
-                sh '''
-                    kubectl apply -f k8s/ingress.yaml
-                    kubectl apply -f k8s/ingress-redirects.yaml
-                    kubectl apply -f k8s/ingress-tools.yaml
-                    kubectl apply -f k8s/ingress-eureka-static.yaml
-                    kubectl apply -f k8s/ingress-zipkin-api.yaml
-                    echo "Waiting for ingress IP..."
-                    kubectl get ingress skillsync-ingress -n skillsync
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh '''
+                        kubectl apply -f k8s/ingress.yaml
+                        kubectl apply -f k8s/ingress-redirects.yaml
+                        kubectl apply -f k8s/ingress-tools.yaml
+                        kubectl apply -f k8s/ingress-eureka-static.yaml
+                        kubectl apply -f k8s/ingress-zipkin-api.yaml
+                        echo "Waiting for ingress IP..."
+                        kubectl get ingress skillsync-ingress -n skillsync
+                    '''
+                }
             }
         }
 
