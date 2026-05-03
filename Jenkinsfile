@@ -142,7 +142,7 @@ pipeline {
                     credentialsId: 'aws-credentials'
                 ]]) {
                     sh """
-                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/config-server.yaml | kubectl apply -f -
+                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/config-server.yaml | kubectl apply -f -
                         kubectl rollout status deployment/config-server -n ${NAMESPACE} --timeout=300s
                     """
                 }
@@ -157,7 +157,7 @@ pipeline {
                     credentialsId: 'aws-credentials'
                 ]]) {
                     sh """
-                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/eureka-server.yaml | kubectl apply -f -
+                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/eureka-server.yaml | kubectl apply -f -
                         kubectl rollout status deployment/eureka-server -n ${NAMESPACE} --timeout=300s
                     """
                 }
@@ -167,15 +167,15 @@ pipeline {
         // ── 10. Deploy all business services in parallel ───────────────────────
         stage('Deploy Business Services') {
             parallel {
-                stage('auth-service')         { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/auth-service.yaml | kubectl apply -f -" } } }
-                stage('user-service')         { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/user-service.yaml | kubectl apply -f -" } } }
-                stage('mentor-service')       { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/mentor-service.yaml | kubectl apply -f -" } } }
-                stage('skill-service')        { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/skill-service.yaml | kubectl apply -f -" } } }
-                stage('session-service')      { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/session-service.yaml | kubectl apply -f -" } } }
-                stage('group-service')        { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/group-service.yaml | kubectl apply -f -" } } }
-                stage('review-service')       { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/review-service.yaml | kubectl apply -f -" } } }
-                stage('notification-service') { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/notification-service.yaml | kubectl apply -f -" } } }
-                stage('payment-service')      { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/payment-service.yaml | kubectl apply -f -" } } }
+                stage('auth-service')         { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/auth-service.yaml | kubectl apply -f -" } } }
+                stage('user-service')         { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/user-service.yaml | kubectl apply -f -" } } }
+                stage('mentor-service')       { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/mentor-service.yaml | kubectl apply -f -" } } }
+                stage('skill-service')        { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/skill-service.yaml | kubectl apply -f -" } } }
+                stage('session-service')      { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/session-service.yaml | kubectl apply -f -" } } }
+                stage('group-service')        { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/group-service.yaml | kubectl apply -f -" } } }
+                stage('review-service')       { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/review-service.yaml | kubectl apply -f -" } } }
+                stage('notification-service') { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/notification-service.yaml | kubectl apply -f -" } } }
+                stage('payment-service')      { steps { withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) { sh "sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/payment-service.yaml | kubectl apply -f -" } } }
             }
         }
 
@@ -187,7 +187,7 @@ pipeline {
                     credentialsId: 'aws-credentials'
                 ]]) {
                     sh """
-                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|:latest|:${TAG}|g' k8s/services/api-gateway.yaml | kubectl apply -f -
+                        sed 's|AWS_ACCOUNT_ID_PLACEHOLDER|${AWS_ACCOUNT_ID}|g; s|REGION_PLACEHOLDER|${REGION}|g; s|:latest|:${TAG}|g' k8s/services/api-gateway.yaml | kubectl apply -f -
                         kubectl rollout status deployment/api-gateway -n ${NAMESPACE} --timeout=300s
                     """
                 }

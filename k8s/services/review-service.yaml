@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: review-service
-          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.ap-south-1.amazonaws.com/skillsync-repo/review-service:latest
+          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.REGION_PLACEHOLDER.amazonaws.com/skillsync-repo/review-service:latest
           ports:
             - containerPort: 8087
           envFrom:

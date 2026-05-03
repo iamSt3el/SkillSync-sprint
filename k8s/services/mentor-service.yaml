@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: mentor-service
-          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.ap-south-1.amazonaws.com/skillsync-repo/mentor-service:latest
+          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.REGION_PLACEHOLDER.amazonaws.com/skillsync-repo/mentor-service:latest
           ports:
             - containerPort: 8083
           envFrom:

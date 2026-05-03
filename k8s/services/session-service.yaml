@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: session-service
-          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.ap-south-1.amazonaws.com/skillsync-repo/session-service:latest
+          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.REGION_PLACEHOLDER.amazonaws.com/skillsync-repo/session-service:latest
           ports:
             - containerPort: 8085
           envFrom:

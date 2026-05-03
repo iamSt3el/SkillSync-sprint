@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: skill-service
-          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.ap-south-1.amazonaws.com/skillsync-repo/skill-service:latest
+          image: AWS_ACCOUNT_ID_PLACEHOLDER.dkr.ecr.REGION_PLACEHOLDER.amazonaws.com/skillsync-repo/skill-service:latest
           ports:
             - containerPort: 8084
           envFrom:
